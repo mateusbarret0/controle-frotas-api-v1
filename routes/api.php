@@ -19,4 +19,4 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
-Route::get('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
+Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
