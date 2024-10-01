@@ -20,3 +20,5 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
+Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
+Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');

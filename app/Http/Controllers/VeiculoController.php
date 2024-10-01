@@ -9,14 +9,18 @@ class VeiculoController extends Controller
 {
     public function getVeiculos(Request $request)
     {
-            // $dados = $request->query();
 
             $veiculos = DB::table('VEICULOS as veic')
                 ->select(
                 'veic.modelo',
                 'veic.placa',
+                'veic.ano',
                 'veic.capacidade',
+                'veic.dt_prox_manu',
                 'veic.dt_ultim_manu',
+                'veic.empresa',
+                'veic.motorista',
+                'veic.tipo_veiculo',
                 )
                 ->get();
 
@@ -39,4 +43,51 @@ class VeiculoController extends Controller
 
     return response()->json(['success' => true, 'message' => 'Veículo cadastrado com sucesso!'], 200);
 }
+public function deleteVeiculos(Request $request)
+{
+    $placa = $request->input('placa'); 
+
+    if (!$placa) {
+        return response()->json(['success' => false, 'message' => 'Placa do veículo não fornecido'], 400);
+    }
+
+  
+    $deleted = DB::table('VEICULOS')->where('placa', $placa)->delete();
+
+    if ($deleted) {
+        return response()->json(['success' => true, 'message' => 'Veículo excluído com sucesso!'], 200);
+    } else {
+        return response()->json(['success' => false, 'message' => 'Erro ao excluir veículo ou veículo não encontrado'], 400);
+    }
+}
+public function editVeiculos(Request $request)
+{
+    $veiculo = DB::table('VEICULOS')->where('placa', $request->placa)->first();
+
+    if (!$veiculo) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Veículo não encontrado',
+        ], 404);
+    }
+
+    DB::table('VEICULOS')
+        ->where('placa', $request->placa)
+        ->update([
+            'modelo' => $request->modelo,
+            'ano' => $request->ano,
+            'capacidade' => $request->capacidade,
+            'dt_prox_manu' => $request->dataProxManutencao,
+            'dt_ultim_manu' => $request->dataUltManutencao,
+            'empresa' => $request->empresa,
+            'motorista' => $request->motorista,
+            'tipo_veiculo' => $request->tipoVeiculo,
+        ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Veículo atualizado com sucesso',
+    ], 200);
+}
+
 }
