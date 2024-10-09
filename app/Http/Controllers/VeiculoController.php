@@ -8,24 +8,26 @@ use Illuminate\Support\Facades\DB;
 class VeiculoController extends Controller
 {
     public function getVeiculos(Request $request)
-    {
+{
+    $searchTerm = $request->input('searchTerm');
 
-            $veiculos = DB::table('VEICULOS as veic')
-                ->select(
-                'veic.modelo',
-                'veic.placa',
-                'veic.ano',
-                'veic.capacidade',
-                'veic.dt_prox_manu',
-                'veic.dt_ultim_manu',
-                'veic.empresa',
-                'veic.motorista',
-                'veic.tipo_veiculo',
-                )
-                ->get();
+    $veiculos = DB::table('VEICULOS as veic')
+        ->select(
+            'veic.modelo',
+            'veic.placa',
+            'veic.ano',
+            'veic.capacidade',
+            'veic.dt_prox_manu',
+            'veic.dt_ultim_manu',
+            'veic.empresa',
+            'veic.motorista',
+            'veic.tipo_veiculo'
+        )
+        ->get();
 
-            return response($veiculos, 200);  
-    }
+    return response($veiculos, 200);  
+}
+
     
     public function insertVeiculos(Request $request)
 {
@@ -89,5 +91,25 @@ public function editVeiculos(Request $request)
         'message' => 'Veículo atualizado com sucesso',
     ], 200);
 }
+public function insertRotas(Request $request)
+{
+    $veiculo = DB::table('ROTAS')->insert([
+        'LOCAL_PARTIDA' => $request->input('localPartida'),
+        'LOCAL_CHEGADA' => $request->input('localChegada'),
+    ]);
 
+    return response()->json(['success' => true, 'message' => 'Veículo cadastrado com sucesso!'], 200);
+}
+public function getRotas(Request $request)
+{
+
+    $rotas = DB::table('ROTAS as r')
+        ->select(
+            'r.LOCAL_PARTIDA',
+            'r.LOCAL_CHEGADA',
+        )
+        ->get();
+
+    return response($rotas, 200);  
+}
 }

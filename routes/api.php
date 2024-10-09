@@ -22,3 +22,5 @@ Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
 Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
 Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
+Route::post('insert/rota', 'App\Http\Controllers\VeiculoController@insertRotas');
+Route::get('get/rotas', 'App\Http\Controllers\VeiculoController@getRotas');
