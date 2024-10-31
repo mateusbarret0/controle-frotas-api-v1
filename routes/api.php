@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VeiculoController;
+use App\Http\Controllers\UsuarioController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -18,9 +19,14 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
-Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
+Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
-Route::post('insert/rota', 'App\Http\Controllers\VeiculoController@insertRotas');
-Route::get('get/rotas', 'App\Http\Controllers\VeiculoController@getRotas');
+Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
+// Route::post('insert/rota', 'App\Http\Controllers\VeiculoController@insertRotas');
+// Route::get('get/rotas', 'App\Http\Controllers\VeiculoController@getRotas');
+
+Route::post('insert/usuario', 'App\Http\Controllers\UsuarioController@insertUsuario');
+Route::get('usuarios', 'App\Http\Controllers\UsuarioController@getUsuarios');
+Route::post('edit/usuario', 'App\Http\Controllers\UsuarioController@editUsuarios');
+Route::post('delete/usuario', 'App\Http\Controllers\UsuarioController@deleteUsuarios');

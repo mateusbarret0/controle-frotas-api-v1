@@ -91,6 +91,9 @@ public function editVeiculos(Request $request)
         'message' => 'Veículo atualizado com sucesso',
     ], 200);
 }
+
+
+
 public function insertRotas(Request $request)
 {
     $veiculo = DB::table('ROTAS')->insert([
