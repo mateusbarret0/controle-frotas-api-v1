@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VeiculoController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\AuthController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -18,6 +19,8 @@ use App\Http\Controllers\UsuarioController;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
