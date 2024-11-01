@@ -15,26 +15,37 @@ class UsuarioController extends Controller
             'email' => $request->input('email'),
             'status' => $request->input('status'),
             'tipo' => $request->input('tipoUsuario'),
+            'senha' => '123456',
         ]);
     
         return response()->json(['success' => true, 'message' => 'Usuario cadastrado com sucesso!'], 200);
     }
 
     public function getUsuarios(Request $request)
-    {
-    
-        $usuarios = DB::table('usuarios as usur')
-            ->select(
-                'usur.nome',
-                'usur.cpf',
-                'usur.email',
-                'usur.status',
-                'usur.tipo',
-            )
-            ->get();
-    
-        return response($usuarios, 200);  
+{
+    $query = DB::table('usuarios as usur')
+        ->select(
+            'usur.nome',
+            'usur.cpf',
+            'usur.email',
+            'usur.status',
+            'usur.tipo'
+        );
+
+    if ($request->has('search') && $request->input('search') != '') {
+        $searchTerm = $request->input('search');
+
+        $query->where(function($subQuery) use ($searchTerm) {
+            $subQuery->where('usur.nome', 'LIKE', '%' . $searchTerm . '%')
+                     ->orWhere('usur.email', 'LIKE', '%' . $searchTerm . '%')
+                     ->orWhere('usur.cpf', 'LIKE', '%' . $searchTerm . '%');
+        });
     }
+
+    $usuarios = $query->get();
+
+    return response($usuarios, 200);
+}
 
     public function deleteUsuarios(Request $request)
 {   
