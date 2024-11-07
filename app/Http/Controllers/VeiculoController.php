@@ -13,7 +13,6 @@ class VeiculoController extends Controller
 
         $veiculos = DB::table('VEICULOS as veic')
             ->select(
-                'veic.id',
                 'veic.modelo',
                 'veic.placa',
                 'veic.ano',
@@ -24,8 +23,19 @@ class VeiculoController extends Controller
                 'veic.motorista',
                 'veic.tipo_veiculo',
                 'veic.status'
-            )
-            ->get();
+            );
+
+        if ($request->has('search') && $request->input('search') != '') {
+            $searchTerm = $request->input('search');
+
+            $veiculos->where(function ($subQuery) use ($searchTerm) {
+                $subQuery->where('veic.modelo', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('veic.motorista', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        $veiculos = $veiculos->get();
 
         return response($veiculos, 200);
     }
