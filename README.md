@@ -36,3 +36,45 @@ Como Iniciar o Back End do Projeto - Controle de Frotas:
     DB_PASSWORD=acesso@123
 
 5 - Crie o Banco de Dados Local:
+
+    Acesse seu banco de dados MySQL local (pode ser via terminal ou uma ferramenta gráfica como o DBeaver ou MySQL Workbench)
+    Crie um novo banco de dados com o nome configurado no arquivo .env, ou seja, "alfaid". O comando para criar um banco de dados no MySQL:
+
+    "CREATE DATABASE alfaid;"
+
+    Logo após, no mesmo script rode esses comandos:
+
+    "use alfaid
+
+    CREATE TABLE VEICULOS (
+
+ID INT AUTO_INCREMENT PRIMARY KEY,
+MODELO VARCHAR(255),
+PLACA VARCHAR(20),
+ANO INT,
+CAPACIDADE INT,
+DT_PROX_MANU DATE,
+DT_ULTIM_MANU DATE,
+EMPRESA VARCHAR(255),
+MOTORISTA VARCHAR(255),
+TIPO_VEICULO VARCHAR(100),
+STATUS VARCHAR(100)
+);
+
+CREATE TABLE USUARIOS (
+id INT AUTO_INCREMENT PRIMARY KEY,
+nome VARCHAR(255) NOT NULL,
+cpf VARCHAR(14) UNIQUE NOT NULL,
+email VARCHAR(255) UNIQUE NOT NULL,
+status VARCHAR(50),
+tipo VARCHAR(50),
+senha VARCHAR(255) NOT NULL
+);
+
+INSERT INTO usuarios (NOME, CPF, EMAIL, STATUS, TIPO, SENHA)
+VALUES ( 'teste', '000.000.000-00', 'teste@gmail.com', 'ativo', 'motorista', 'teste');
+"
+
+6 - Iniciar o projeto:
+
+    Logo após fazer todas as etapas, chegue no repositório através do terminal do VsCode e rode o comando "php artisan serve".
