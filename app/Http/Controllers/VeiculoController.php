@@ -22,7 +22,8 @@ class VeiculoController extends Controller
                 'veic.dt_ultim_manu',
                 'veic.empresa',
                 'veic.motorista',
-                'veic.tipo_veiculo'
+                'veic.tipo_veiculo',
+                'veic.status'
             )
             ->get();
 
@@ -42,6 +43,7 @@ class VeiculoController extends Controller
             'empresa' => $request->input('empresa'),
             'motorista' => $request->input('motorista'),
             'tipo_veiculo' => $request->input('tipoVeiculo'),
+            'status' => 'disponivel',
         ]);
 
         return response()->json(['success' => true, 'message' => 'Veículo cadastrado com sucesso!'], 200);
@@ -95,7 +97,29 @@ class VeiculoController extends Controller
         ], 200);
     }
 
+    public function editStatusVeiculo(Request $request)
+    {
+        // dd($request->all());
+        $veiculo = DB::table('VEICULOS')->where('placa', $request->placa)->first();
 
+        if (!$veiculo) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Veículo não encontrado',
+            ], 404);
+        }
+
+        DB::table('VEICULOS')
+            ->where('placa', $request->placa)
+            ->update([
+                'status' => $request->status,
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status do veículo atualizado com sucesso',
+        ], 200);
+    }
 
     public function insertRotas(Request $request)
     {
