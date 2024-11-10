@@ -13,7 +13,6 @@ class VeiculoController extends Controller
 
         $veiculos = DB::table('VEICULOS as veic')
             ->select(
-                'veic.id',
                 'veic.modelo',
                 'veic.placa',
                 'veic.ano',
@@ -22,9 +21,21 @@ class VeiculoController extends Controller
                 'veic.dt_ultim_manu',
                 'veic.empresa',
                 'veic.motorista',
-                'veic.tipo_veiculo'
-            )
-            ->get();
+                'veic.tipo_veiculo',
+                'veic.status'
+            );
+
+        if ($request->has('search') && $request->input('search') != '') {
+            $searchTerm = $request->input('search');
+
+            $veiculos->where(function ($subQuery) use ($searchTerm) {
+                $subQuery->where('veic.modelo', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('veic.motorista', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        $veiculos = $veiculos->get();
 
         return response($veiculos, 200);
     }
@@ -42,6 +53,7 @@ class VeiculoController extends Controller
             'empresa' => $request->input('empresa'),
             'motorista' => $request->input('motorista'),
             'tipo_veiculo' => $request->input('tipoVeiculo'),
+            'status' => 'disponivel',
         ]);
 
         return response()->json(['success' => true, 'message' => 'Veículo cadastrado com sucesso!'], 200);
@@ -95,7 +107,29 @@ class VeiculoController extends Controller
         ], 200);
     }
 
+    public function editStatusVeiculo(Request $request)
+    {
+        // dd($request->all());
+        $veiculo = DB::table('VEICULOS')->where('placa', $request->placa)->first();
 
+        if (!$veiculo) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Veículo não encontrado',
+            ], 404);
+        }
+
+        DB::table('VEICULOS')
+            ->where('placa', $request->placa)
+            ->update([
+                'status' => $request->status,
+            ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Status do veículo atualizado com sucesso',
+        ], 200);
+    }
 
     public function insertRotas(Request $request)
     {

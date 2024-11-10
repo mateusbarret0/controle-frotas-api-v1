@@ -25,6 +25,7 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
+Route::post('edit/status/veiculo', 'App\Http\Controllers\VeiculoController@editStatusVeiculo');
 Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
 // Route::post('insert/rota', 'App\Http\Controllers\VeiculoController@insertRotas');
 // Route::get('get/rotas', 'App\Http\Controllers\VeiculoController@getRotas');
