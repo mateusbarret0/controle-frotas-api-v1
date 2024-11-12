@@ -22,6 +22,8 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 
+Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
+
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
