@@ -22,7 +22,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 
-Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
 
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
@@ -30,9 +29,12 @@ Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculo
 Route::post('edit/status/veiculo', 'App\Http\Controllers\VeiculoController@editStatusVeiculo');
 Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
 // Route::post('insert/rota', 'App\Http\Controllers\VeiculoController@insertRotas');
-// Route::get('get/rotas', 'App\Http\Controllers\VeiculoController@getRotas');
 
 Route::post('insert/usuario', 'App\Http\Controllers\UsuarioController@insertUsuario');
 Route::get('usuarios', 'App\Http\Controllers\UsuarioController@getUsuarios');
 Route::post('edit/usuario', 'App\Http\Controllers\UsuarioController@editUsuarios');
 Route::post('delete/usuario', 'App\Http\Controllers\UsuarioController@deleteUsuarios');
+
+Route::post('insert/rotas', 'App\Http\Controllers\RotasController@insertRotas');
+Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
+Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');

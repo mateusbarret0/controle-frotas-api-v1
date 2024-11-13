@@ -13,6 +13,7 @@ class VeiculoController extends Controller
 
         $veiculos = DB::table('VEICULOS as veic')
             ->select(
+                'veic.id',
                 'veic.modelo',
                 'veic.placa',
                 'veic.ano',
