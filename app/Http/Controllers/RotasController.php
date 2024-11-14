@@ -38,10 +38,13 @@ class RotasController extends Controller
         'BAIRRO_CHEGADA' => $request->input('enderecoChegada.bairro'),
         'CIDADE_CHEGADA' => $request->input('enderecoChegada.cidade'),
         'ESTADO_CHEGADA' => $request->input('enderecoChegada.estado'),
+        'DATA_HORA_INICIO' => now(), 
+        'DATA_HORA_CHEGADA' => now()->addHours(6),  
     ]);
 
     return response()->json(['success' => true, 'message' => 'Rota cadastrada com sucesso!'], 200);
 }
+
 
 public function getRotas(Request $request)
 {
@@ -65,7 +68,9 @@ public function getRotas(Request $request)
         'r.RUA_CHEGADA',
         'r.BAIRRO_CHEGADA',
         'r.CIDADE_CHEGADA',
-        'r.ESTADO_CHEGADA'
+        'r.ESTADO_CHEGADA',
+        'r.DATA_HORA_INICIO',
+        'r.DATA_HORA_CHEGADA'
     )
     ->get();
 
