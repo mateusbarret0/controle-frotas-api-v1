@@ -77,18 +77,30 @@ class RotasController extends Controller
             ->where('v.placa', $placa)
             ->get();
 
-        // if ($request->has('search') && $request->input('search') != '') {
-        //     $searchTerm = $request->input('search');
-
-        //     $rotas->where(function ($subQuery) use ($searchTerm) {
-        //         $subQuery->where('veic.modelo', 'LIKE', '%' . $searchTerm . '%')
-        //             ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%')
-        //             ->orWhere('veic.motorista', 'LIKE', '%' . $searchTerm . '%');
-        //     });
-        // }
-
-        // $rotas = $rotas->get();
 
         return response($rotas, 200);
     }
+    public function editStatusRota(Request $request)
+{
+    $rota = DB::table('ROTAS')->where('placa', $request->placa)->first();
+
+    if (!$rota) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Rota não encontrada',
+        ], 404);
+    }
+
+    DB::table('ROTAS')
+        ->where('placa', $request->placa)
+        ->update([
+            'status' => $request->status,
+            'DESCRICAO_ROTA' => $request->desc
+        ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Status da rota atualizado com sucesso',
+    ], 200);
+}
 }

@@ -38,3 +38,4 @@ Route::post('delete/usuario', 'App\Http\Controllers\UsuarioController@deleteUsua
 Route::post('insert/rotas', 'App\Http\Controllers\RotasController@insertRotas');
 Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
 Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');
+Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
