@@ -10,8 +10,7 @@ class RotasController extends Controller
 {
     public function buscarEndereco($cep)
     {
-        $response = Http::get("https://viacep.com.br/ws/{$cep}/json/");
-
+        $response = Http::withoutVerifying()->get("https://viacep.com.br/ws/{$cep}/json/");
         if ($response->successful()) {
             return response()->json($response->json());
         } else {
@@ -20,32 +19,38 @@ class RotasController extends Controller
     }
 
     public function insertRotas(Request $request)
-    {
-        $placa = $request->input('veiculo.placa');
-        $rota = DB::table('ROTAS')->insert([
-            'CEP_PARTIDA' => $request->input('cepPartida'),
-            'CEP_CHEGADA' => $request->input('cepChegada'),
-            'NUMERO_PARTIDA' => $request->input('numeroPartida'),
-            'NUMERO_CHEGADA' => $request->input('numeroChegada'),
-            'DESCRICAO_PARTIDA' => $request->input('descricaoPartida'),
-            'DESCRICAO_CHEGADA' => $request->input('descricaoChegada'),
-            'COMPLEMENTO_PARTIDA' => $request->input('complementoPartida'),
-            'COMPLEMENTO_CHEGADA' => $request->input('complementoChegada'),
-            'RUA_PARTIDA' => $request->input('enderecoPartida.rua'),
-            'BAIRRO_PARTIDA' => $request->input('enderecoPartida.bairro'),
-            'CIDADE_PARTIDA' => $request->input('enderecoPartida.cidade'),
-            'ESTADO_PARTIDA' => $request->input('enderecoPartida.estado'),
-            'RUA_CHEGADA' => $request->input('enderecoChegada.rua'),
-            'BAIRRO_CHEGADA' => $request->input('enderecoChegada.bairro'),
-            'CIDADE_CHEGADA' => $request->input('enderecoChegada.cidade'),
-            'ESTADO_CHEGADA' => $request->input('enderecoChegada.estado'),
-            'DATA_HORA_INICIO' => now(),
-            'DATA_HORA_CHEGADA' => now()->addHours(2),
-            'PLACA' => $placa,
-        ]);
+{
+    $placa = $request->input('veiculo.placa');
 
-        return response()->json(['success' => true, 'message' => 'Rota cadastrada com sucesso!'], 200);
-    }
+    $codRota = DB::table('ROTAS')
+        ->where('PLACA', $placa)
+        ->count() + 1; 
+
+    DB::table('ROTAS')->insert([
+        'COD_ROTA' => $codRota, 
+        'CEP_PARTIDA' => $request->input('cepPartida'),
+        'CEP_CHEGADA' => $request->input('cepChegada'),
+        'NUMERO_PARTIDA' => $request->input('numeroPartida'),
+        'NUMERO_CHEGADA' => $request->input('numeroChegada'),
+        'DESCRICAO_PARTIDA' => $request->input('descricaoPartida'),
+        'DESCRICAO_CHEGADA' => $request->input('descricaoChegada'),
+        'COMPLEMENTO_PARTIDA' => $request->input('complementoPartida'),
+        'COMPLEMENTO_CHEGADA' => $request->input('complementoChegada'),
+        'RUA_PARTIDA' => $request->input('enderecoPartida.rua'),
+        'BAIRRO_PARTIDA' => $request->input('enderecoPartida.bairro'),
+        'CIDADE_PARTIDA' => $request->input('enderecoPartida.cidade'),
+        'ESTADO_PARTIDA' => $request->input('enderecoPartida.estado'),
+        'RUA_CHEGADA' => $request->input('enderecoChegada.rua'),
+        'BAIRRO_CHEGADA' => $request->input('enderecoChegada.bairro'),
+        'CIDADE_CHEGADA' => $request->input('enderecoChegada.cidade'),
+        'ESTADO_CHEGADA' => $request->input('enderecoChegada.estado'),
+        'DATA_HORA_INICIO' => now(),
+        'DATA_HORA_CHEGADA' => now()->addHours(2),
+        'PLACA' => $placa,
+    ]);
+
+    return response()->json(['success' => true, 'message' => 'Rota cadastrada com sucesso!'], 200);
+}
 
 
     public function getRotas(Request $request)
@@ -75,6 +80,7 @@ class RotasController extends Controller
                 'r.DATA_HORA_CHEGADA',
                 'r.status',
                 'r.DESCRICAO_ROTA',
+                'r.COD_ROTA',
             )
             ->where('v.placa', $placa)
             ->get();
