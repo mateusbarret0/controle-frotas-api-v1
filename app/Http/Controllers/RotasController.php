@@ -72,7 +72,9 @@ class RotasController extends Controller
                 'r.CIDADE_CHEGADA',
                 'r.ESTADO_CHEGADA',
                 'r.DATA_HORA_INICIO',
-                'r.DATA_HORA_CHEGADA'
+                'r.DATA_HORA_CHEGADA',
+                'r.status',
+                'r.DESCRICAO_ROTA',
             )
             ->where('v.placa', $placa)
             ->get();
