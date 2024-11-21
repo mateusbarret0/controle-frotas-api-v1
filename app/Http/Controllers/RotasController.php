@@ -19,38 +19,38 @@ class RotasController extends Controller
     }
 
     public function insertRotas(Request $request)
-{
-    $placa = $request->input('veiculo.placa');
+    {
+        $placa = $request->input('veiculo.placa');
 
-    $codRota = DB::table('ROTAS')
-        ->where('PLACA', $placa)
-        ->count() + 1; 
+        $codRota = DB::table('ROTAS')
+            ->where('PLACA', $placa)
+            ->count() + 1;
 
-    DB::table('ROTAS')->insert([
-        'COD_ROTA' => $codRota, 
-        'CEP_PARTIDA' => $request->input('cepPartida'),
-        'CEP_CHEGADA' => $request->input('cepChegada'),
-        'NUMERO_PARTIDA' => $request->input('numeroPartida'),
-        'NUMERO_CHEGADA' => $request->input('numeroChegada'),
-        'DESCRICAO_PARTIDA' => $request->input('descricaoPartida'),
-        'DESCRICAO_CHEGADA' => $request->input('descricaoChegada'),
-        'COMPLEMENTO_PARTIDA' => $request->input('complementoPartida'),
-        'COMPLEMENTO_CHEGADA' => $request->input('complementoChegada'),
-        'RUA_PARTIDA' => $request->input('enderecoPartida.rua'),
-        'BAIRRO_PARTIDA' => $request->input('enderecoPartida.bairro'),
-        'CIDADE_PARTIDA' => $request->input('enderecoPartida.cidade'),
-        'ESTADO_PARTIDA' => $request->input('enderecoPartida.estado'),
-        'RUA_CHEGADA' => $request->input('enderecoChegada.rua'),
-        'BAIRRO_CHEGADA' => $request->input('enderecoChegada.bairro'),
-        'CIDADE_CHEGADA' => $request->input('enderecoChegada.cidade'),
-        'ESTADO_CHEGADA' => $request->input('enderecoChegada.estado'),
-        'DATA_HORA_INICIO' => now(),
-        'DATA_HORA_CHEGADA' => now()->addHours(2),
-        'PLACA' => $placa,
-    ]);
+        DB::table('ROTAS')->insert([
+            'COD_ROTA' => $codRota,
+            'CEP_PARTIDA' => $request->input('cepPartida'),
+            'CEP_CHEGADA' => $request->input('cepChegada'),
+            'NUMERO_PARTIDA' => $request->input('numeroPartida'),
+            'NUMERO_CHEGADA' => $request->input('numeroChegada'),
+            'DESCRICAO_PARTIDA' => $request->input('descricaoPartida'),
+            'DESCRICAO_CHEGADA' => $request->input('descricaoChegada'),
+            'COMPLEMENTO_PARTIDA' => $request->input('complementoPartida'),
+            'COMPLEMENTO_CHEGADA' => $request->input('complementoChegada'),
+            'RUA_PARTIDA' => $request->input('enderecoPartida.rua'),
+            'BAIRRO_PARTIDA' => $request->input('enderecoPartida.bairro'),
+            'CIDADE_PARTIDA' => $request->input('enderecoPartida.cidade'),
+            'ESTADO_PARTIDA' => $request->input('enderecoPartida.estado'),
+            'RUA_CHEGADA' => $request->input('enderecoChegada.rua'),
+            'BAIRRO_CHEGADA' => $request->input('enderecoChegada.bairro'),
+            'CIDADE_CHEGADA' => $request->input('enderecoChegada.cidade'),
+            'ESTADO_CHEGADA' => $request->input('enderecoChegada.estado'),
+            'DATA_HORA_INICIO' => now(),
+            'DATA_HORA_CHEGADA' => now()->addHours(2),
+            'PLACA' => $placa,
+        ]);
 
-    return response()->json(['success' => true, 'message' => 'Rota cadastrada com sucesso!'], 200);
-}
+        return response()->json(['success' => true, 'message' => 'Rota cadastrada com sucesso!'], 200);
+    }
 
 
     public function getRotas(Request $request)
@@ -89,26 +89,49 @@ class RotasController extends Controller
         return response($rotas, 200);
     }
     public function editStatusRota(Request $request)
-{
-    $rota = DB::table('ROTAS')->where('placa', $request->placa)->first();
+    {
+        $rota = DB::table('ROTAS')->where('placa', $request->placa)->first();
 
-    if (!$rota) {
+        if (!$rota) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Rota não encontrada',
+            ], 404);
+        }
+
+        DB::table('ROTAS')
+            ->where('placa', $request->placa)
+            ->update([
+                'status' => $request->status,
+                'DESCRICAO_ROTA' => $request->desc
+            ]);
+
         return response()->json([
-            'status' => 'error',
-            'message' => 'Rota não encontrada',
-        ], 404);
+            'status' => 'success',
+            'message' => 'Status da rota atualizado com sucesso',
+        ], 200);
     }
+    public function updateObsRotas(Request $request)
+    {
+        $placa = $request->input('placa'); // Obtém a placa do veículo do corpo da requisição
 
-    DB::table('ROTAS')
-        ->where('placa', $request->placa)
-        ->update([
-            'status' => $request->status,
-            'DESCRICAO_ROTA' => $request->desc
-        ]);
+        // Valida se a rota com a placa fornecida existe
+        $rota = DB::table('ROTAS')->where('PLACA', $placa)->first();
 
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Status da rota atualizado com sucesso',
-    ], 200);
-}
+        if (!$rota) {
+            return response()->json(['success' => false, 'message' => 'Rota não encontrada para essa placa.'], 404);
+        }
+
+        // Atualiza os campos necessários da rota
+        DB::table('ROTAS')
+            ->where('PLACA', $placa)
+            ->update([
+                'DESVIOS' => $request->input('desvios'),
+                'PARADAS' => $request->input('paradas'),
+                'INCIDENTES' => $request->input('incidentes'),
+                'ROTA_ALTERNATIVA' => $request->input('rotaAlternativa'),
+            ]);
+
+        return response()->json(['success' => true, 'message' => 'Observações atualizadas com sucesso!'], 200);
+    }
 }

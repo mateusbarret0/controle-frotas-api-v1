@@ -36,6 +36,7 @@ Route::post('edit/usuario', 'App\Http\Controllers\UsuarioController@editUsuarios
 Route::post('delete/usuario', 'App\Http\Controllers\UsuarioController@deleteUsuarios');
 
 Route::post('insert/rotas', 'App\Http\Controllers\RotasController@insertRotas');
+Route::post('update/obs/rota', 'App\Http\Controllers\RotasController@updateObsRotas');
 Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
 Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');
 Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
