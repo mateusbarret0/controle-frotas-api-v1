@@ -92,7 +92,7 @@ class RotasController extends Controller
 
         return response($rotas, 200);
     }
-    
+
     public function getObsRotas(Request $request)
     {
         $codRota = $request->query('codRota');
@@ -113,6 +113,7 @@ class RotasController extends Controller
     }
     public function editStatusRota(Request $request)
     {
+        $codRota = $request->input('codRota');
         $rota = DB::table('ROTAS')->where('placa', $request->placa)->first();
 
         if (!$rota) {
@@ -124,6 +125,7 @@ class RotasController extends Controller
 
         DB::table('ROTAS')
             ->where('placa', $request->placa)
+            ->where('COD_ROTA', $codRota)
             ->update([
                 'status' => $request->status,
                 'DESCRICAO_ROTA' => $request->desc
@@ -136,7 +138,7 @@ class RotasController extends Controller
     }
     public function updateObsRotas(Request $request)
     {
-        $placa = $request->input('placa'); 
+        $placa = $request->input('placa');
 
         $rota = DB::table('ROTAS')->where('PLACA', $placa)->first();
 
