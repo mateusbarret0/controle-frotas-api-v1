@@ -81,10 +81,33 @@ class RotasController extends Controller
                 'r.status',
                 'r.DESCRICAO_ROTA',
                 'r.COD_ROTA',
+                'r.DESVIOS',
+                'r.PARADAS',
+                'r.ROTA_ALTERNATIVA',
+                'r.INCIDENTES',
             )
             ->where('v.placa', $placa)
             ->get();
 
+
+        return response($rotas, 200);
+    }
+    
+    public function getObsRotas(Request $request)
+    {
+        $codRota = $request->query('codRota');
+        $placa = $request->query('placa');
+        $rotas = DB::table('rotas as r')
+            ->join('veiculos as v', 'v.placa', '=', 'r.placa')
+            ->select(
+                'r.DESVIOS',
+                'r.PARADAS',
+                'r.ROTA_ALTERNATIVA',
+                'r.INCIDENTES',
+            )
+            ->where('v.placa', $placa)
+            ->where('r.COD_ROTA', $codRota)
+            ->get();
 
         return response($rotas, 200);
     }
@@ -113,16 +136,14 @@ class RotasController extends Controller
     }
     public function updateObsRotas(Request $request)
     {
-        $placa = $request->input('placa'); // Obtém a placa do veículo do corpo da requisição
+        $placa = $request->input('placa'); 
 
-        // Valida se a rota com a placa fornecida existe
         $rota = DB::table('ROTAS')->where('PLACA', $placa)->first();
 
         if (!$rota) {
             return response()->json(['success' => false, 'message' => 'Rota não encontrada para essa placa.'], 404);
         }
 
-        // Atualiza os campos necessários da rota
         DB::table('ROTAS')
             ->where('PLACA', $placa)
             ->update([
