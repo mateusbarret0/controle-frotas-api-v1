@@ -22,7 +22,6 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 
-
 Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
 Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
 Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
@@ -41,3 +40,5 @@ Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndere
 Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');
 Route::get('get/obs/rotas', 'App\Http\Controllers\RotasController@getObsRotas');
 Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
+
+Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
