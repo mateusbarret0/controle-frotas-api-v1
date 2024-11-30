@@ -8,23 +8,29 @@ use Illuminate\Support\Facades\DB;
 class UsuarioController extends Controller
 {
     public function insertUsuario(Request $request)
-    {
-        $usuario = DB::table('USUARIOS')->insert([
-            'nome' => $request->input('nome'),
-            'cpf' => $request->input('cpf'),
-            'email' => $request->input('email'),
-            'status' => $request->input('status'),
-            'tipo' => $request->input('tipoUsuario'),
-            'senha' => '123456',
-        ]);
-    
-        return response()->json(['success' => true, 'message' => 'Usuario cadastrado com sucesso!'], 200);
-    }
+{
+    $lastCodUsur = DB::table('USUARIOS')->max('cod_usur');
+    $newCodUsur = $lastCodUsur + 1;
+
+    $usuario = DB::table('USUARIOS')->insert([
+        'cod_usur' => $newCodUsur, 
+        'nome' => $request->input('nome'),
+        'cpf' => $request->input('cpf'),
+        'email' => $request->input('email'),
+        'status' => $request->input('status'),
+        'tipo' => $request->input('tipoUsuario'),
+        'dt_cadastro' => now(),
+        'senha' => '123456',
+    ]);
+
+    return response()->json(['success' => true, 'message' => 'Usuário cadastrado com sucesso!'], 200);
+}
 
     public function getUsuarios(Request $request)
 {
     $query = DB::table('usuarios as usur')
         ->select(
+            'usur.cod_usur',
             'usur.nome',
             'usur.cpf',
             'usur.email',
@@ -67,7 +73,7 @@ class UsuarioController extends Controller
 }
 public function editUsuarios(Request $request)
 {
-    $usuario = DB::table('usuarios')->where('cpf', $request->cpf)->first();
+    $usuario = DB::table('usuarios')->where('cod_usur', $request->codUsur)->first();
     // dd($request);
     if (!$usuario) {
         return response()->json([
@@ -77,7 +83,7 @@ public function editUsuarios(Request $request)
     }
 
     DB::table('usuarios')
-        ->where('cpf', $request->cpf)
+        ->where('cod_usur', $request->codUsur)
         ->update([
             'nome' => $request->nome,
             'cpf' => $request->cpf,

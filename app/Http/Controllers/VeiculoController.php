@@ -13,7 +13,7 @@ class VeiculoController extends Controller
 
         $veiculos = DB::table('VEICULOS as veic')
             ->select(
-                'veic.id',
+                'veic.cod_veic',
                 'veic.modelo',
                 'veic.placa',
                 'veic.ano',
@@ -44,7 +44,10 @@ class VeiculoController extends Controller
 
     public function insertVeiculos(Request $request)
     {
+        $lastCodVeiculo = DB::table('VEICULOS')->max('cod_veic');
+        $newCodVeiculo = $lastCodVeiculo + 1;
         $veiculo = DB::table('VEICULOS')->insert([
+            'cod_veic' => $newCodVeiculo,
             'modelo' => $request->input('modelo'),
             'placa' => $request->input('placa'),
             'ano' => $request->input('ano'),
@@ -132,25 +135,17 @@ class VeiculoController extends Controller
         ], 200);
     }
 
-    public function insertRotas(Request $request)
-    {
-        $veiculo = DB::table('ROTAS')->insert([
-            'LOCAL_PARTIDA' => $request->input('localPartida'),
-            'LOCAL_CHEGADA' => $request->input('localChegada'),
-        ]);
-
-        return response()->json(['success' => true, 'message' => 'Veículo cadastrado com sucesso!'], 200);
-    }
-    public function getRotas(Request $request)
+    public function getMotoristas(Request $request)
     {
 
-        $rotas = DB::table('ROTAS as r')
+        $motoristas = DB::table('usuarios as u')
             ->select(
-                'r.LOCAL_PARTIDA',
-                'r.LOCAL_CHEGADA',
+                'u.cod_usur',
+                'u.nome',
             )
+            ->where('u.tipo', 'Motorista')
             ->get();
 
-        return response($rotas, 200);
+        return response($motoristas, 200);
     }
 }
