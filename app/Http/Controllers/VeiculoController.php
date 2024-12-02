@@ -82,7 +82,7 @@ class VeiculoController extends Controller
     public function editVeiculos(Request $request)
     {
         // dd($request->all());
-        $veiculo = DB::table('VEICULOS')->where('id', $request->numVeiculo)->first();
+        $veiculo = DB::table('VEICULOS')->where('cod_veic', $request->numVeiculo)->first();
 
         if (!$veiculo) {
             return response()->json([
@@ -92,7 +92,7 @@ class VeiculoController extends Controller
         }
 
         DB::table('VEICULOS')
-            ->where('id', $request->numVeiculo)
+            ->where('cod_veic', $request->numVeiculo)
             ->update([
                 'modelo' => $request->modelo,
                 'ano' => $request->ano,
