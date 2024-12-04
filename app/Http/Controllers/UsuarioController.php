@@ -8,34 +8,61 @@ use Illuminate\Support\Facades\DB;
 class UsuarioController extends Controller
 {
     public function insertUsuario(Request $request)
-{
-    $lastCodUsur = DB::table('USUARIOS')->max('cod_usur');
-    $newCodUsur = $lastCodUsur + 1;
+    {
+        // dd($request);
+        $lastCodUsur = DB::table('USUARIOS')->max('cod_usuario');
+        $newCodUsur = $lastCodUsur + 1;
 
-    $usuario = DB::table('USUARIOS')->insert([
-        'cod_usur' => $newCodUsur, 
-        'nome' => $request->input('nome'),
-        'cpf' => $request->input('cpf'),
-        'email' => $request->input('email'),
-        'status' => $request->input('status'),
-        'tipo' => $request->input('tipoUsuario'),
-        'dt_cadastro' => now(),
-        'senha' => '123456',
-    ]);
+        $usuario = DB::table('USUARIOS')->insert([
+            'cod_usuario' => $newCodUsur, 
+            'nome' => $request->input('nome'),
+            'cpf' => $request->input('cpf'),
+            'email' => $request->input('email'),
+            'status' => $request->input('status'),
+            'cod_tipo_usuario' => $request->input('tipoUsuario'),
+            'dt_cadastro_usur' => now(),
+            'senha' => '123456', 
+        ]);
 
-    return response()->json(['success' => true, 'message' => 'Usuário cadastrado com sucesso!'], 200);
-}
+        switch ($request->input('tipoUsuario')) {
+            case 1:
+                $tipoUsuario = 'Funcionario';
+                break;
+            case 2:
+                $tipoUsuario = 'Terceiro';
+                break;
+            case 3:
+                $tipoUsuario = 'Motorista';
+                break;
+            default:
+                $tipoUsuario = null;
+                break;
+        }
+
+        if ($tipoUsuario) {
+            DB::table('tipos_usuario')->insert([
+                'cod_usuario' => $newCodUsur,
+                'cod_tipo_usuario' => $request->input('tipoUsuario'),
+                'descricao' => $tipoUsuario,
+            ]);
+        } else {
+            return response()->json(['error' => 'Tipo de usuário inválido.'], 400);
+        }
+        return response()->json(['message' => 'Usuário salvo com sucesso!'], 201);
+    }
+
 
     public function getUsuarios(Request $request)
 {
     $query = DB::table('usuarios as usur')
+        ->Leftjoin('tipos_usuario as tipos', 'usur.cod_usuario', '=', 'tipos.cod_usuario')
         ->select(
-            'usur.cod_usur',
+            'usur.cod_usuario',
             'usur.nome',
             'usur.cpf',
             'usur.email',
             'usur.status',
-            'usur.tipo'
+            'tipos.descricao'
         );
 
     if ($request->has('search') && $request->input('search') != '') {
@@ -55,17 +82,18 @@ class UsuarioController extends Controller
 
     public function deleteUsuarios(Request $request)
 {   
-    // dd($request);
-    $cpf = $request->input('cpf'); 
+    $codUsur = $request->input('codUsur'); 
 
-    if (!$cpf) {
-        return response()->json(['success' => false, 'message' => 'CPF do usuário não fornecido'], 400);
+    if (!$codUsur) {
+        return response()->json(['success' => false, 'message' => 'Código do usuário não fornecido'], 400);
     }
 
   
-    $deleted = DB::table('usuarios')->where('cpf', $cpf)->delete();
+    $deleted = DB::table('usuarios')->where('cod_usuario', $codUsur)->delete();
+    
+    $deletedTipo = DB::table('tipos_usuario')->where('cod_usuario', $codUsur)->delete();
 
-    if ($deleted) {
+    if ($deleted && $deletedTipo) {
         return response()->json(['success' => true, 'message' => 'Usuário excluído com sucesso!'], 200);
     } else {
         return response()->json(['success' => false, 'message' => 'Erro ao excluir usuário ou usuário não encontrado'], 400);
@@ -73,7 +101,7 @@ class UsuarioController extends Controller
 }
 public function editUsuarios(Request $request)
 {
-    $usuario = DB::table('usuarios')->where('cod_usur', $request->codUsur)->first();
+    $usuario = DB::table('usuarios')->where('cod_usuario', $request->codUsur)->first();
     // dd($request);
     if (!$usuario) {
         return response()->json([
@@ -82,15 +110,33 @@ public function editUsuarios(Request $request)
         ], 404);
     }
 
-    DB::table('usuarios')
-        ->where('cod_usur', $request->codUsur)
-        ->update([
-            'nome' => $request->nome,
-            'cpf' => $request->cpf,
-            'email' => $request->email,
-            'status' => $request->status,
-            'tipo' => $request->tipo,
-        ]);
+    switch ($request->tipo) {
+        case 1:
+            $tipoUsuario = 'Funcionario';
+            break;
+        case 2:
+            $tipoUsuario = 'Terceiro';
+            break;
+        case 3:
+            $tipoUsuario = 'Motorista';
+            break;
+        default:
+            $tipoUsuario = null;
+            break;
+    }
+
+    DB::table('usuarios as usur')
+    ->leftJoin('tipos_usuario as tipos', 'usur.cod_usuario', '=', 'tipos.cod_usuario')
+    ->where('usur.cod_usuario', $request->codUsur)  
+    ->update([
+        'usur.nome' => $request->nome,
+        'usur.cpf' => $request->cpf,
+        'usur.email' => $request->email,
+        'usur.status' => $request->status,
+        'tipos.cod_tipo_usuario' => $request->tipo,
+        'tipos.descricao' => $tipoUsuario,
+    ]);
+
 
     return response()->json([
         'status' => 'success',
