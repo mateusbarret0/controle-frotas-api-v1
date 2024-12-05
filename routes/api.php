@@ -39,6 +39,7 @@ Route::post('update/obs/rota', 'App\Http\Controllers\RotasController@updateObsRo
 Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
 Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');
 Route::get('get/obs/rotas', 'App\Http\Controllers\RotasController@getObsRotas');
+Route::get('get/status/rotas', 'App\Http\Controllers\RotasController@getStatusRotas');
 Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
 
 Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
