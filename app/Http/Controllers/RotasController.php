@@ -10,6 +10,7 @@ class RotasController extends Controller
 {
     public function buscarEndereco($cep)
     {
+        // dd($cep);
         $response = Http::withoutVerifying()->get("https://viacep.com.br/ws/{$cep}/json/");
         if ($response->successful()) {
             return response()->json($response->json());
@@ -20,191 +21,205 @@ class RotasController extends Controller
 
     public function insertRotas(Request $request)
     {
-        $placa = $request->input('veiculo.placa');
-    
+        $cod_veiculo = $request->input('veiculo.cod_veiculo');
+        
         $codRota = DB::table('ROTAS')
-            ->where('PLACA', $placa)
+            ->where('cod_veiculo', $cod_veiculo)
             ->count() + 1;
     
         DB::table('ROTAS')->insert([
             'COD_ROTA' => $codRota,
-            'CEP_PARTIDA' => $request->input('cepPartida'),
-            'CEP_CHEGADA' => $request->input('cepChegada'),
-            'NUMERO_PARTIDA' => $request->input('numeroPartida'),
-            'NUMERO_CHEGADA' => $request->input('numeroChegada'),
-            'DESCRICAO_PARTIDA' => $request->input('descricaoPartida'),
-            'DESCRICAO_CHEGADA' => $request->input('descricaoChegada'),
-            'COMPLEMENTO_PARTIDA' => $request->input('complementoPartida'),
-            'COMPLEMENTO_CHEGADA' => $request->input('complementoChegada'),
-            'RUA_PARTIDA' => $request->input('enderecoPartida.rua'),
-            'BAIRRO_PARTIDA' => $request->input('enderecoPartida.bairro'),
-            'CIDADE_PARTIDA' => $request->input('enderecoPartida.cidade'),
-            'ESTADO_PARTIDA' => $request->input('enderecoPartida.estado'),
-            'RUA_CHEGADA' => $request->input('enderecoChegada.rua'),
-            'BAIRRO_CHEGADA' => $request->input('enderecoChegada.bairro'),
-            'CIDADE_CHEGADA' => $request->input('enderecoChegada.cidade'),
-            'ESTADO_CHEGADA' => $request->input('enderecoChegada.estado'),
-            'DATA_HORA_INICIO' => now(),
-            'DATA_HORA_CHEGADA' => now()->addHours(2),
-            'PLACA' => $placa,
+            'cod_veiculo' => $cod_veiculo,
+            'cod_parada' => 1, 
+            'cod_chegada' => $codRota,
+            'cod_partida' => $codRota,
+        ]);
+    
+        DB::table('PARTIDAS')->insert([
+            'cod_rota' => $codRota,
+            'cod_partida' => 1, 
+            'cep_partida' => $request->input('cepPartida'), 
+            'numero_partida' => $request->input('numeroPartida'),
+            'descricao_partida' => $request->input('descricaoPartida'),
+            'complemento_partida' => $request->input('complementoPartida'),
+            'rua_partida' => $request->input('enderecoPartida.rua'),
+            'bairro_partida' => $request->input('enderecoPartida.bairro'),
+            'cidade_partida' => $request->input('enderecoPartida.cidade'),
+            'estado_partida' => $request->input('enderecoPartida.estado'),
+            'data_hora_partida' => now(),
+        ]);
+    
+
+        DB::table('CHEGADAS')->insert([
+            'cod_rota' => $codRota,
+            'cod_chegada' => $codRota,
+            'cep_chegada' => $request->input('cepChegada'),
+            'numero_chegada' => $request->input('numeroChegada'),
+            'descricao_chegada' => $request->input('descricaoChegada'),
+            'complemento_chegada' => $request->input('complementoChegada'),
+            'rua_chegada' => $request->input('enderecoChegada.rua'),
+            'bairro_chegada' => $request->input('enderecoChegada.bairro'),
+            'cidade_chegada' => $request->input('enderecoChegada.cidade'),
+            'estado_chegada' => $request->input('enderecoChegada.estado'),
+            'data_hora_chegada' => now()->addHours(2),
         ]);
     
         $paradas = $request->input('paradas');
         if (!empty($paradas)) {
             $paradasData = [];
             $codParada = 1; 
-    
+        
             foreach ($paradas as $parada) {
                 $paradasData[] = [
                     'COD_ROTA' => $codRota,
                     'COD_PARADA' => $codParada, 
-                    'CEP' => $parada['cep'],
-                    'NUMERO' => $parada['numero'],
-                    'DESCRICAO' => $parada['descricao'] ?? null,
-                    'COMPLEMENTO' => $parada['complemento'] ?? null,
-                    'RUA' => $parada['endereco']['rua'],
-                    'BAIRRO' => $parada['endereco']['bairro'],
-                    'CIDADE' => $parada['endereco']['cidade'],
-                    'UF' => $parada['endereco']['estado'],
+                    'CEP_PARADA' => $parada['cep'],
+                    'NUMERO_PARADA' => $parada['numero'],
+                    'DESCRICAO_PARADA' => $parada['descricao'] ?? null,
+                    'COMPLEMENTO_PARADA' => $parada['complemento'] ?? null,
+                    'RUA_PARADA' => $parada['endereco']['rua'],
+                    'BAIRRO_PARADA' => $parada['endereco']['bairro'],
+                    'CIDADE_PARADA' => $parada['endereco']['cidade'],
+                    'ESTADO_PARADA' => $parada['endereco']['estado'],
                 ];
-                $codParada++; 
+                $codParada++;
             }
-    
-            DB::table('PARADAS_ROTAS')->insert($paradasData);
+        
+            DB::table('PARADAS')->insert($paradasData);
         }
     
         return response()->json(['success' => true, 'message' => 'Rota e paradas cadastradas com sucesso!'], 200);
     }
     
-    
-
 
     public function getRotas(Request $request)
-{
-    $placa = $request->query('placa');
+{   
+    // dd($request->all());
+    $cod_veiculo = $request->query('cod_veiculo');
 
-    $rotasRaw = DB::table('rotas as r')
-        ->join('veiculos as v', 'v.placa', '=', 'r.placa')
-        ->leftJoin('paradas_rotas as pr', 'pr.COD_ROTA', '=', 'r.COD_ROTA')
+    $rotasRaw = DB::table('ROTAS as r')
+        ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
+        ->join('PARTIDAS as p', 'r.cod_partida', '=', 'p.cod_partida')
+        ->join('CHEGADAS as c', 'r.cod_chegada', '=', 'c.cod_chegada')
+        ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
         ->select(
-            'r.ID',
-            'r.CEP_PARTIDA',
-            'r.CEP_CHEGADA',
-            'r.NUMERO_PARTIDA',
-            'r.NUMERO_CHEGADA',
-            'r.DESCRICAO_PARTIDA',
-            'r.DESCRICAO_CHEGADA',
-            'r.COMPLEMENTO_PARTIDA',
-            'r.COMPLEMENTO_CHEGADA',
-            'r.RUA_PARTIDA',
-            'r.BAIRRO_PARTIDA',
-            'r.CIDADE_PARTIDA',
-            'r.ESTADO_PARTIDA',
-            'r.RUA_CHEGADA',
-            'r.BAIRRO_CHEGADA',
-            'r.CIDADE_CHEGADA',
-            'r.ESTADO_CHEGADA',
-            'r.DATA_HORA_INICIO',
-            'r.DATA_HORA_CHEGADA',
+            'r.cod_rota',
+            'r.cod_veiculo',
             'r.status',
-            'r.DESCRICAO_ROTA',
-            'r.COD_ROTA',
-            'r.DESVIOS',
-            'r.PARADAS',
-            'r.ROTA_ALTERNATIVA',
-            'r.INCIDENTES',
-            'pr.COD_PARADA',
-            'pr.CEP as cepParada',
-            'pr.NUMERO as numeroParada',
-            'pr.DESCRICAO as descricaoParada',
-            'pr.COMPLEMENTO as complementoParada',
-            'pr.RUA as ruaParada',
-            'pr.BAIRRO as bairroParada',
-            'pr.CIDADE as cidadeParada',
-            'pr.UF as ufParada'
+            'r.desc_status',
+            'p.cep_partida',
+            'p.numero_partida',
+            'p.descricao_partida',
+            'p.complemento_partida',
+            'p.rua_partida',
+            'p.bairro_partida',
+            'p.cidade_partida',
+            'p.estado_partida',
+            'p.data_hora_partida',
+            'c.cep_chegada',
+            'c.numero_chegada',
+            'c.descricao_chegada',
+            'c.complemento_chegada',
+            'c.rua_chegada',
+            'c.bairro_chegada',
+            'c.cidade_chegada',
+            'c.estado_chegada',
+            'c.data_hora_chegada',
+            'pr.cod_parada',
+            'pr.cep_parada as cepParada',
+            'pr.numero_parada as numeroParada',
+            'pr.descricao_parada as descricaoParada',
+            'pr.complemento_parada as complementoParada',
+            'pr.rua_parada as ruaParada',
+            'pr.bairro_parada as bairroParada',
+            'pr.cidade_parada as cidadeParada',
+            'pr.estado_parada as estadoParada'
         )
-        ->where('v.placa', $placa)
+        ->when($cod_veiculo, function ($query, $cod_veiculo) {
+            $query->where('v.cod_veiculo', $cod_veiculo);
+        })
         ->get();
 
-        $rotas = [];
-        foreach ($rotasRaw as $row) {
-    $codRota = $row->COD_ROTA;
+    $rotas = [];
+    foreach ($rotasRaw as $row) {
+        $codRota = $row->cod_rota;
 
-    if (!isset($rotas[$codRota])) {
-        $rotas[$codRota] = [
-            'COD_ROTA' => $row->COD_ROTA, 
-            'ID' => $row->ID,
-            'CEP_PARTIDA' => $row->CEP_PARTIDA,
-            'CEP_CHEGADA' => $row->CEP_CHEGADA,
-            'NUMERO_PARTIDA' => $row->NUMERO_PARTIDA,
-            'NUMERO_CHEGADA' => $row->NUMERO_CHEGADA,
-            'DESCRICAO_PARTIDA' => $row->DESCRICAO_PARTIDA,
-            'DESCRICAO_CHEGADA' => $row->DESCRICAO_CHEGADA,
-            'COMPLEMENTO_PARTIDA' => $row->COMPLEMENTO_PARTIDA,
-            'COMPLEMENTO_CHEGADA' => $row->COMPLEMENTO_CHEGADA,
-            'RUA_PARTIDA' => $row->RUA_PARTIDA,
-            'BAIRRO_PARTIDA' => $row->BAIRRO_PARTIDA,
-            'CIDADE_PARTIDA' => $row->CIDADE_PARTIDA,
-            'ESTADO_PARTIDA' => $row->ESTADO_PARTIDA,
-            'RUA_CHEGADA' => $row->RUA_CHEGADA,
-            'BAIRRO_CHEGADA' => $row->BAIRRO_CHEGADA,
-            'CIDADE_CHEGADA' => $row->CIDADE_CHEGADA,
-            'ESTADO_CHEGADA' => $row->ESTADO_CHEGADA,
-            'DATA_HORA_INICIO' => $row->DATA_HORA_INICIO,
-            'DATA_HORA_CHEGADA' => $row->DATA_HORA_CHEGADA,
-            'status' => $row->status,
-            'DESCRICAO_ROTA' => $row->DESCRICAO_ROTA,
-            'DESVIOS' => $row->DESVIOS,
-            'PARADAS' => $row->PARADAS,
-            'ROTA_ALTERNATIVA' => $row->ROTA_ALTERNATIVA,
-            'INCIDENTES' => $row->INCIDENTES,
-            'paradas' => []
-        ];
+        if (!isset($rotas[$codRota])) {
+            $rotas[$codRota] = [
+                'cod_rota' => $row->cod_rota,
+                'cod_veiculo' => $row->cod_veiculo,
+                'status' => $row->status,
+                'desc_status' => $row->desc_status,
+                'partida' => [
+                    'cep' => $row->cep_partida,
+                    'numero' => $row->numero_partida,
+                    'descricao' => $row->descricao_partida,
+                    'complemento' => $row->complemento_partida,
+                    'rua' => $row->rua_partida,
+                    'bairro' => $row->bairro_partida,
+                    'cidade' => $row->cidade_partida,
+                    'estado' => $row->estado_partida,
+                    'data_hora' => $row->data_hora_partida,
+                ],
+                'chegada' => [
+                    'cep' => $row->cep_chegada,
+                    'numero' => $row->numero_chegada,
+                    'descricao' => $row->descricao_chegada,
+                    'complemento' => $row->complemento_chegada,
+                    'rua' => $row->rua_chegada,
+                    'bairro' => $row->bairro_chegada,
+                    'cidade' => $row->cidade_chegada,
+                    'estado' => $row->estado_chegada,
+                    'data_hora' => $row->data_hora_chegada,
+                ],
+                'paradas' => [],
+            ];
+        }
+
+        if ($row->cod_parada) {
+            $rotas[$codRota]['paradas'][] = [
+                'cod_parada' => $row->cod_parada,
+                'cep' => $row->cepParada,
+                'numero' => $row->numeroParada,
+                'descricao' => $row->descricaoParada,
+                'complemento' => $row->complementoParada,
+                'rua' => $row->ruaParada,
+                'bairro' => $row->bairroParada,
+                'cidade' => $row->cidadeParada,
+                'estado' => $row->estadoParada,
+            ];
+        }
     }
 
-    if ($row->COD_PARADA) {
-        $rotas[$codRota]['paradas'][] = [
-            'COD_PARADA' => $row->COD_PARADA,
-            'CEP' => $row->cepParada,
-            'NUMERO' => $row->numeroParada,
-            'DESCRICAO' => $row->descricaoParada,
-            'COMPLEMENTO' => $row->complementoParada,
-            'RUA' => $row->ruaParada,
-            'BAIRRO' => $row->bairroParada,
-            'CIDADE' => $row->cidadeParada,
-            'UF' => $row->ufParada,
-        ];
-    }
-}
+    $rotas = array_values($rotas);
 
-$rotas = array_values($rotas);
-
-return response()->json($rotas, 200);
+    return response()->json($rotas, 200);
 }
 
 
     public function getObsRotas(Request $request)
     {
-        $codRota = $request->query('codRota');
-        $placa = $request->query('placa');
-        $rotas = DB::table('rotas as r')
-            ->join('veiculos as v', 'v.placa', '=', 'r.placa')
+        // dd($request->all());
+        $cod_rota = $request->query('cod_rota');
+        $cod_veiculo = $request->query('cod_veiculo');
+        $rotas = DB::table('rotas')
             ->select(
-                'r.DESVIOS',
-                'r.PARADAS',
-                'r.ROTA_ALTERNATIVA',
-                'r.INCIDENTES',
+                'DESVIOS',
+                'PARADAS',
+                'ROTA_ALTERNATIVA',
+                'INCIDENTES',
             )
-            ->where('v.placa', $placa)
-            ->where('r.COD_ROTA', $codRota)
+            ->where('cod_veiculo', $cod_veiculo)
+            ->where('cod_rota', $cod_rota)
             ->get();
 
         return response($rotas, 200);
     }
     public function editStatusRota(Request $request)
     {
+        // dd($request->all());
         $codRota = $request->input('codRota');
-        $rota = DB::table('ROTAS')->where('placa', $request->placa)->first();
+        $rota = DB::table('ROTAS')->where('cod_veiculo', $request->cod_veiculo)->first();
 
         if (!$rota) {
             return response()->json([
@@ -214,11 +229,11 @@ return response()->json($rotas, 200);
         }
 
         DB::table('ROTAS')
-            ->where('placa', $request->placa)
-            ->where('COD_ROTA', $codRota)
+            ->where('cod_veiculo', $request->cod_veiculo)
+            ->where('cod_rota', $codRota)
             ->update([
                 'status' => $request->status,
-                'DESCRICAO_ROTA' => $request->desc
+                'desc_status' => $request->desc
             ]);
 
         return response()->json([
@@ -228,16 +243,17 @@ return response()->json($rotas, 200);
     }
     public function updateObsRotas(Request $request)
     {
-        $placa = $request->input('placa');
-
-        $rota = DB::table('ROTAS')->where('PLACA', $placa)->first();
+        $cod_veiculo = $request->input('cod_veiculo');
+        $cod_rota = $request->input('cod_rota');
+        $rota = DB::table('ROTAS')->where('cod_veiculo', $cod_veiculo)->first();
 
         if (!$rota) {
-            return response()->json(['success' => false, 'message' => 'Rota não encontrada para essa placa.'], 404);
+            return response()->json(['success' => false, 'message' => `Rota não encontrada para o código de rota $cod_rota `], 404);
         }
 
         DB::table('ROTAS')
-            ->where('PLACA', $placa)
+            ->where('cod_veiculo', $cod_veiculo)
+            ->where('cod_rota', $cod_rota)
             ->update([
                 'DESVIOS' => $request->input('desvios'),
                 'PARADAS' => $request->input('paradas'),
