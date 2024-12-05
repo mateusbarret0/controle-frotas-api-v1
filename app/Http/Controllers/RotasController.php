@@ -37,7 +37,7 @@ class RotasController extends Controller
     
         DB::table('PARTIDAS')->insert([
             'cod_rota' => $codRota,
-            'cod_partida' => 1, 
+            'cod_partida' => $codRota, 
             'cep_partida' => $request->input('cepPartida'), 
             'numero_partida' => $request->input('numeroPartida'),
             'descricao_partida' => $request->input('descricaoPartida'),
