@@ -3,29 +3,51 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Usuario; 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash; 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate([
-            'usuario' => 'required|string',
-            'senha' => 'required|string',
+        $usuario = User::join('tipos_usuario', 'usuarios.id_tipo_usuario', '=', 'tipos_usuario.id')->where('nome', $request->usuario)->first();
+    
+        if (!$usuario || $usuario->password !== $request->password) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Usuário ou senha inválidos'
+            ], 401);
+        }
+    
+        $token = auth('api')->login($usuario);
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Login bem-sucedido!',
+            'token' => $token,
+            'data' => $usuario
         ]);
-    
-        $usuario = DB::table('USUARIOS')->where('NOME', $request->usuario)->first();
-    
-        if (!$usuario) {
-            return response()->json(['message' => 'Usuário não encontrado.'], 404);
-        }
-    
-        if ($usuario && $request->senha === $usuario->senha) {
-            return response()->json(['message' => 'Login bem-sucedido!'], 200);
-        }
-    
-        return response()->json(['message' => 'Usuário ou senha incorretos.'], 401);
     }
 
+public function logout()
+{
+    Auth::guard('api')->logout();
+    return response()->json(['message' => 'Logout realizado com sucesso']);
+}
+
+    public function updateTermo(Request $request)
+    {
+        $info = $request->all();
+        $userId = $info['id'];
+        $status = $info['status'];
+    
+        DB::table('usuarios')
+            ->where('id', $userId)
+            ->update(['termo' => $status]);
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Termo atualizado!'
+            ]);    }
 }

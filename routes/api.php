@@ -16,30 +16,33 @@ use App\Http\Controllers\AuthController;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
 
 Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 
-Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
-Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
-Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
-Route::post('edit/status/veiculo', 'App\Http\Controllers\VeiculoController@editStatusVeiculo');
-Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
-Route::get('get/motoristas', 'App\Http\Controllers\VeiculoController@getMotoristas');
+Route::middleware(['jwt.verify'])->group(function () {
+    Route::post('termo/atualizar', 'App\Http\Controllers\AuthController@updateTermo');
 
-Route::post('insert/usuario', 'App\Http\Controllers\UsuarioController@insertUsuario');
-Route::get('usuarios', 'App\Http\Controllers\UsuarioController@getUsuarios');
-Route::post('edit/usuario', 'App\Http\Controllers\UsuarioController@editUsuarios');
-Route::post('delete/usuario', 'App\Http\Controllers\UsuarioController@deleteUsuarios');
+    Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
+    Route::get('veiculos', 'App\Http\Controllers\VeiculoController@getVeiculos');
+    Route::post('edit/veiculos', 'App\Http\Controllers\VeiculoController@editVeiculos');
+    Route::post('edit/status/veiculo', 'App\Http\Controllers\VeiculoController@editStatusVeiculo');
+    Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
+    Route::get('get/motoristas', 'App\Http\Controllers\VeiculoController@getMotoristas');
 
-Route::post('insert/rotas', 'App\Http\Controllers\RotasController@insertRotas');
-Route::post('update/obs/rota', 'App\Http\Controllers\RotasController@updateObsRotas');
-Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
-Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');
-Route::get('get/obs/rotas', 'App\Http\Controllers\RotasController@getObsRotas');
-Route::get('get/status/rotas', 'App\Http\Controllers\RotasController@getStatusRotas');
-Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
+    Route::post('insert/usuario', 'App\Http\Controllers\UsuarioController@insertUsuario');
+    Route::get('usuarios', 'App\Http\Controllers\UsuarioController@getUsuarios');
+    Route::get('get/usur', 'App\Http\Controllers\UsuarioController@getUsur');
+    Route::post('edit/usuario', 'App\Http\Controllers\UsuarioController@editUsuarios');
+    Route::post('delete/usuario', 'App\Http\Controllers\UsuarioController@deleteUsuarios');
 
-Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
+    Route::post('insert/rotas', 'App\Http\Controllers\RotasController@insertRotas');
+    Route::post('update/obs/rota', 'App\Http\Controllers\RotasController@updateObsRotas');
+    Route::get('busca/cep/{cep}', 'App\Http\Controllers\RotasController@buscarEndereco');
+    Route::get('get/rotas', 'App\Http\Controllers\RotasController@getRotas');
+    Route::get('get/obs/rotas', 'App\Http\Controllers\RotasController@getObsRotas');
+    Route::get('get/status/rotas', 'App\Http\Controllers\RotasController@getStatusRotas');
+    Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
+
+    Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
+    
+});

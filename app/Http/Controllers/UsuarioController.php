@@ -79,6 +79,35 @@ class UsuarioController extends Controller
 
     return response($usuarios, 200);
 }
+    public function getUsur(Request $request)
+{
+
+    // dd($request);
+    $usur = DB::table('usuarios as usur')
+        ->leftJoin('tipos_usuario as tipos', 'usur.id', '=', 'tipos.id')
+        ->select(
+            'usur.id',
+            'usur.nome',
+            'usur.cpf',
+            'usur.email',
+            'usur.status',
+            'tipos.descricao'
+        )
+        // ->where('usur.nome', $request->nome)
+        ->get();
+
+    if ($usur) {
+        return response()->json([
+            'success' => true,
+            'data' => $usur
+        ], 200);
+    }
+
+    return response()->json([
+        'success' => false,
+        'message' => 'Usuário não encontrado'
+    ], 404);
+}
 
     public function deleteUsuarios(Request $request)
 {   
