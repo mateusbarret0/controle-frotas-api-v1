@@ -19,7 +19,7 @@ use App\Http\Controllers\AuthController;
 
 Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
 
-Route::middleware(['jwt.verify'])->group(function () {
+// Route::middleware(['jwt.verify'])->group(function () {
     Route::post('termo/atualizar', 'App\Http\Controllers\AuthController@updateTermo');
 
     Route::post('insert/veiculos', 'App\Http\Controllers\VeiculoController@insertVeiculos');
@@ -28,6 +28,7 @@ Route::middleware(['jwt.verify'])->group(function () {
     Route::post('edit/status/veiculo', 'App\Http\Controllers\VeiculoController@editStatusVeiculo');
     Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
     Route::get('get/motoristas', 'App\Http\Controllers\VeiculoController@getMotoristas');
+    Route::post('veiculos/linkMotorista', 'App\Http\Controllers\VeiculoController@linkMotorista');
 
     Route::post('insert/usuario', 'App\Http\Controllers\UsuarioController@insertUsuario');
     Route::get('usuarios', 'App\Http\Controllers\UsuarioController@getUsuarios');
@@ -45,4 +46,4 @@ Route::middleware(['jwt.verify'])->group(function () {
 
     Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
     
-});
+// });

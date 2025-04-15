@@ -13,7 +13,46 @@ class VeiculoController extends Controller
 
         $veiculos = DB::table('VEICULOS as veic')
             ->leftjoin('EMPRESAS as emp', 'veic.cod_empresa', '=', 'emp.cod_empresa')
+            ->join('USUARIOS as u', 'veic.cod_motorista', '=', 'u.id')
+            ->join('TIPOS_VEICULO as tv', 'veic.id_tipo_veiculo', '=', 'tv.id')
+            ->select(
+                'veic.cod_veiculo',
+                'veic.modelo',
+                'veic.placa',
+                'veic.ano',
+                'veic.capacidade',
+                // 'veic.dt_prox_manu',
+                // 'veic.dt_ultim_manu',
+                'u.nome as motorista',
+                'u.id as cod_motorista',
+                'tv.descricao as tipo_veiculo',
+                'veic.status',
+                'emp.nome as empresa'
+            );
+
+        if (!empty($searchTerm)) {
+            $veiculos->where(function ($subQuery) use ($searchTerm) {
+                $subQuery->where('veic.modelo', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%')
+                    ->orWhere('u.nome', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        $veiculos = $veiculos->get();
+
+        return response($veiculos, 200);
+    }
+    public function linkMotorista(Request $request)
+    {
+        $info = $request->all();
+        dd($info);
+
+        $searchTerm = $request->input('search');
+
+        $veiculos = DB::table('VEICULOS as veic')
+            ->leftjoin('EMPRESAS as emp', 'veic.cod_empresa', '=', 'emp.cod_empresa')
             ->join('USUARIOS as u', 'veic.cod_motorista', '=', 'u.cod_usuario')
+            ->join('TIPOS_VEICULO as tv', 'veic.id_tipo_veiculo', '=', 'tv.id')
             ->select(
                 'veic.cod_veiculo',
                 'veic.modelo',
@@ -24,7 +63,7 @@ class VeiculoController extends Controller
                 // 'veic.dt_ultim_manu',
                 'u.nome as motorista',
                 'u.cod_usuario as cod_motorista',
-                'veic.tipo_veiculo',
+                'tv.descricao as tipo_veiculo',
                 'veic.status',
                 'emp.nome as empresa'
             );
@@ -42,11 +81,8 @@ class VeiculoController extends Controller
         return response($veiculos, 200);
     }
 
-
-
     public function insertVeiculos(Request $request)
     {
-        // dd($request->all());
         $lastCodVeiculo = DB::table('VEICULOS')->max('cod_veiculo');
         $newCodVeiculo = $lastCodVeiculo + 1;
         $lastCodEmpresa = DB::table('EMPRESAS')->max('cod_empresa');
@@ -61,7 +97,7 @@ class VeiculoController extends Controller
             // 'dt_ultim_manu' => $request->input('dataUltManutencao'),
             'status' => 'disponivel',
             'cod_motorista' => $request->input('motorista'),
-            'tipo_veiculo' => $request->input('tipoVeiculo'),
+            'id_tipo_veiculo' => $request->input('tipoVeiculo'),
             'cod_empresa' => $newCodEmpresa,
         ]);
 
@@ -111,7 +147,7 @@ class VeiculoController extends Controller
                 'placa' => $request->placa,
                 // 'dt_prox_manu' => $request->dataProxManutencao,
                 // 'dt_ultim_manu' => $request->dataUltManutencao,
-                'tipo_veiculo' => $request->tipoVeiculo,
+                'id_tipo_veiculo' => $request->tipoVeiculo,
                 'cod_motorista' => $request->motorista,
             ]);
 
@@ -154,9 +190,9 @@ class VeiculoController extends Controller
     public function getMotoristas(Request $request)
     {
         $motoristas = DB::table('usuarios as u')
-            ->join('tipos_usuario as t', 'u.cod_usuario', '=', 't.cod_usuario')
+            ->join('tipos_usuario as t', 'u.id_tipo_usuario', '=', 't.id')
             ->select(
-                'u.cod_usuario',
+                'u.id',
                 'u.nome',
                 't.descricao'
             )
