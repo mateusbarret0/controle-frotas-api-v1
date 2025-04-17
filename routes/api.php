@@ -28,7 +28,6 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
     Route::post('edit/status/veiculo', 'App\Http\Controllers\VeiculoController@editStatusVeiculo');
     Route::post('delete/veiculos', 'App\Http\Controllers\VeiculoController@deleteVeiculos');
     Route::get('get/motoristas', 'App\Http\Controllers\VeiculoController@getMotoristas');
-    Route::post('veiculos/linkMotorista', 'App\Http\Controllers\VeiculoController@linkMotorista');
 
     Route::post('insert/usuario', 'App\Http\Controllers\UsuarioController@insertUsuario');
     Route::get('usuarios', 'App\Http\Controllers\UsuarioController@getUsuarios');
@@ -43,6 +42,8 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
     Route::get('get/obs/rotas', 'App\Http\Controllers\RotasController@getObsRotas');
     Route::get('get/status/rotas', 'App\Http\Controllers\RotasController@getStatusRotas');
     Route::post('edit/status/rota', 'App\Http\Controllers\RotasController@editStatusRota');
+    Route::post('rota/linkMotorista', 'App\Http\Controllers\RotasController@linkMotorista');
+    Route::post('rota/hodometro/insert', 'App\Http\Controllers\RotasController@insertHodometro');
 
     Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
     

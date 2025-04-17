@@ -12,8 +12,6 @@ class VeiculoController extends Controller
         $searchTerm = $request->input('search');
 
         $veiculos = DB::table('VEICULOS as veic')
-            ->leftjoin('EMPRESAS as emp', 'veic.cod_empresa', '=', 'emp.cod_empresa')
-            ->join('USUARIOS as u', 'veic.cod_motorista', '=', 'u.id')
             ->join('TIPOS_VEICULO as tv', 'veic.id_tipo_veiculo', '=', 'tv.id')
             ->select(
                 'veic.cod_veiculo',
@@ -23,18 +21,14 @@ class VeiculoController extends Controller
                 'veic.capacidade',
                 // 'veic.dt_prox_manu',
                 // 'veic.dt_ultim_manu',
-                'u.nome as motorista',
-                'u.id as cod_motorista',
                 'tv.descricao as tipo_veiculo',
                 'veic.status',
-                'emp.nome as empresa'
             );
 
         if (!empty($searchTerm)) {
             $veiculos->where(function ($subQuery) use ($searchTerm) {
                 $subQuery->where('veic.modelo', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('u.nome', 'LIKE', '%' . $searchTerm . '%');
+                    ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%');
             });
         }
 
@@ -51,7 +45,7 @@ class VeiculoController extends Controller
 
         $veiculos = DB::table('VEICULOS as veic')
             ->leftjoin('EMPRESAS as emp', 'veic.cod_empresa', '=', 'emp.cod_empresa')
-            ->join('USUARIOS as u', 'veic.cod_motorista', '=', 'u.cod_usuario')
+            // ->join('USUARIOS as u', 'veic.cod_motorista', '=', 'u.cod_usuario')
             ->join('TIPOS_VEICULO as tv', 'veic.id_tipo_veiculo', '=', 'tv.id')
             ->select(
                 'veic.cod_veiculo',
@@ -61,8 +55,8 @@ class VeiculoController extends Controller
                 'veic.capacidade',
                 // 'veic.dt_prox_manu',
                 // 'veic.dt_ultim_manu',
-                'u.nome as motorista',
-                'u.cod_usuario as cod_motorista',
+                // 'u.nome as motorista',
+                // 'u.cod_usuario as cod_motorista',
                 'tv.descricao as tipo_veiculo',
                 'veic.status',
                 'emp.nome as empresa'

@@ -33,6 +33,7 @@ class RotasController extends Controller
             'cod_parada' => 1,
             'cod_chegada' => $codRota,
             'cod_partida' => $codRota,
+            'cod_motorista' => $request->input('motorista'),
         ]);
 
         DB::table('PARTIDAS')->insert([
@@ -278,5 +279,64 @@ class RotasController extends Controller
             ]);
 
         return response()->json(['success' => true, 'message' => 'Observações atualizadas com sucesso!'], 200);
+    }
+    public function linkMotorista(Request $request)
+    {
+        $info = $request->all();
+        // dd($info);
+
+        $cod_motorista = $info['codUsur'];
+        $cod_rota = $info['routeInfo'][0]['cod_rota'];        
+        
+        $rota = DB::table('ROTAS')->where('cod_rota', $cod_rota)->first();
+
+
+        if($cod_motorista != $rota->cod_motorista){
+            return response()->json(['success' => false, 'message' => 'Você não está cadastrado nessa rota.'], 400);
+        }
+        if (!$rota) {
+            return response()->json(['success' => false, 'message' => `Rota não encontrada para o código de rota $cod_rota `], 404);
+        }
+
+        DB::table('ROTAS')
+            ->where('cod_rota', $cod_rota)
+            ->update([
+                'scan' => 'S',
+            ]);
+
+        return response()->json(['success' => true, 'message' => 'Motorista vinculado ao veiculo e a rota com sucesso!'], 200);
+    }
+    public function insertHodometro(Request $request)
+    {
+        $info = $request->all();
+        // dd($info);
+
+        $cod_motorista = $info['codUsur'];
+        $cod_rota = $info['routeInfo'][0]['cod_rota'];     
+        $quilometragem = $info['quilometragem'];
+        $imagemBase64 = $info['imagem'];
+
+        $imageData = base64_decode($imagemBase64);
+
+        $filename = 'hodometro_' . now()->format('YmdHis') . '_' . $request->input('codUsur') . '.jpg';
+
+        $folder = storage_path('app/public/hodometros');
+        if (!file_exists($folder)) {
+            mkdir($folder, 0777, true);
+        }
+        $path = $folder . '/' . $filename;
+
+        file_put_contents($path, $imageData);
+
+        DB::table('log_scan_hodometro')->insert([
+            'quilometragem' => $quilometragem,
+            'imagem_path' => 'hodometros/' . $filename,
+            'cod_usur' => $cod_motorista,
+            'cod_rota' => $cod_rota,
+            'data' => now()->format('Y-m-d H:i:s')
+        ]);
+
+
+        return response()->json(['success' => true, 'message' => 'Quilometragem registrada com sucesso!'], 200);
     }
 }
