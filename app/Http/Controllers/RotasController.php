@@ -19,6 +19,73 @@ class RotasController extends Controller
         }
     }
 
+    public function getEnderecoByLatLong($lat, $lng)
+{
+    $apiKey = 'AIzaSyDBwpZs8ef-S4luuIvphLWNSSs5XCga_kc';
+    $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng=$lat,$lng&key=$apiKey";
+    $response = Http::get($url);
+    if ($response->ok()) {
+        $results = $response->json()['results'];
+        if (count($results) > 0) {
+            return $results[0]['address_components'];
+        }
+    }
+    return null;
+}
+
+    
+private function obterUf($address)
+{
+    foreach ($address as $item) {
+        if (in_array('administrative_area_level_1', $item['types'])) {
+            return $item['short_name'];
+        }
+    }
+    return null;
+}
+
+public function insertPartida(Request $request)
+{
+    $infoPartida = $request->all();
+    
+    $latitude  = $infoPartida['latitude'];
+    $longitude = $infoPartida['longitude'];
+    $cod_rota  = $infoPartida['routeInfo'][0]['cod_rota'];
+    $cod_usur  = $infoPartida['codUsur'];
+
+    $address = $this->getEnderecoByLatLong($latitude, $longitude);
+    if (!$address) {
+        return response()->json(['error' => 'Endereço não encontrado.'], 400);
+    }
+
+    $uf = $this->obterUf($address);
+
+    $addressMap = collect($address)->mapWithKeys(function ($item) {
+        return [$item['types'][0] => $item['long_name']];
+    });
+
+    DB::table('ROTAS')
+    ->where('cod_rota', $cod_rota)
+    ->update([
+        'cod_partida' => $cod_rota
+    ]);
+
+    DB::table('PARTIDAS')->insert([
+        'cod_rota'            => $cod_rota,
+        'cod_partida'         => $cod_rota,
+        'cep_partida'         => $addressMap['postal_code'] ?? null,
+        'rua_partida'         => $addressMap['route'] ?? null,
+        'numero_partida'      => $addressMap['street_number'] ?? null,
+        'bairro_partida'      => $addressMap['political'] ?? null,
+        'cidade_partida'      => $addressMap['administrative_area_level_2'] ?? null,
+        'estado_partida'      => $uf, 
+        'latitude_partida'    => $latitude,
+        'longitude_partida'   => $longitude,
+    ]);
+
+    return response()->json(['success' => true , 'message' => 'Partida cadastrada com sucesso!'], 200);
+}
+
     public function insertRotas(Request $request)
     {
         $cod_veiculo = $request->input('veiculo.cod_veiculo');
