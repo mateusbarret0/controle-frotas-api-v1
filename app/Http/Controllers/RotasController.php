@@ -86,78 +86,155 @@ public function insertPartida(Request $request)
     return response()->json(['success' => true , 'message' => 'Partida cadastrada com sucesso!'], 200);
 }
 
-    public function insertRotas(Request $request)
-    {
-        $cod_veiculo = $request->input('veiculo.cod_veiculo');
+private function buscarLatLongGoogle($enderecoCompleto)
+{
+    $apiKey = 'AIzaSyDBwpZs8ef-S4luuIvphLWNSSs5XCga_kc';
+    $url = "https://maps.googleapis.com/maps/api/geocode/json";
 
-        $codRota = DB::table('ROTAS')
-            ->where('cod_veiculo', $cod_veiculo)
-            ->count() + 1;
+    $response = Http::get($url, [
+        'address' => $enderecoCompleto,
+        'key' => $apiKey,
+        'region' => 'br', 
+    ]);
 
-        DB::table('ROTAS')->insert([
-            'COD_ROTA' => $codRota,
-            'cod_veiculo' => $cod_veiculo,
-            'cod_parada' => 1,
-            'cod_chegada' => $codRota,
-            'cod_partida' => $codRota,
-            'cod_motorista' => $request->input('motorista'),
-        ]);
+    if ($response->failed()) {
+        return [null, null];
+    }
 
-        DB::table('PARTIDAS')->insert([
-            'cod_rota' => $codRota,
-            'cod_partida' => $codRota,
-            'cep_partida' => $request->input('cepPartida'),
-            'numero_partida' => $request->input('numeroPartida'),
-            'descricao_partida' => $request->input('descricaoPartida'),
-            'complemento_partida' => $request->input('complementoPartida'),
-            'rua_partida' => $request->input('enderecoPartida.rua'),
-            'bairro_partida' => $request->input('enderecoPartida.bairro'),
-            'cidade_partida' => $request->input('enderecoPartida.cidade'),
-            'estado_partida' => $request->input('enderecoPartida.estado'),
-            'data_hora_partida' => now(),
-        ]);
+    $json = $response->json();
+    if (!empty($json['results'][0]['geometry']['location'])) {
+        $lat = $json['results'][0]['geometry']['location']['lat'];
+        $lng = $json['results'][0]['geometry']['location']['lng'];
+        return [$lat, $lng];
+    }
+
+    return [null, null];
+}
 
 
-        DB::table('CHEGADAS')->insert([
-            'cod_rota' => $codRota,
-            'cod_chegada' => $codRota,
-            'cep_chegada' => $request->input('cepChegada'),
-            'numero_chegada' => $request->input('numeroChegada'),
-            'descricao_chegada' => $request->input('descricaoChegada'),
-            'complemento_chegada' => $request->input('complementoChegada'),
-            'rua_chegada' => $request->input('enderecoChegada.rua'),
-            'bairro_chegada' => $request->input('enderecoChegada.bairro'),
-            'cidade_chegada' => $request->input('enderecoChegada.cidade'),
-            'estado_chegada' => $request->input('enderecoChegada.estado'),
-            'data_hora_chegada' => now()->addHours(2),
-        ]);
+public function insertRotas(Request $request)
+{
+    // --- Pega os dados principais do request
+    $info = $request->all();
+    $cod_veiculo = $request->input('veiculo.cod_veiculo');
 
-        $paradas = $request->input('paradas');
-        if (!empty($paradas)) {
-            $paradasData = [];
-            $codParada = 1;
+    // --- Gera o código da rota
+    $codRota = DB::table('ROTAS')
+        ->where('cod_veiculo', $cod_veiculo)
+        ->count() + 1;
 
-            foreach ($paradas as $parada) {
-                $paradasData[] = [
-                    'COD_ROTA' => $codRota,
-                    'COD_PARADA' => $codParada,
-                    'CEP_PARADA' => $parada['cep'],
-                    'NUMERO_PARADA' => $parada['numero'],
-                    'DESCRICAO_PARADA' => $parada['descricao'] ?? null,
-                    'COMPLEMENTO_PARADA' => $parada['complemento'] ?? null,
-                    'RUA_PARADA' => $parada['endereco']['rua'],
-                    'BAIRRO_PARADA' => $parada['endereco']['bairro'],
-                    'CIDADE_PARADA' => $parada['endereco']['cidade'],
-                    'ESTADO_PARADA' => $parada['endereco']['estado'],
-                ];
-                $codParada++;
-            }
+    // ------- PARTIDA -------
+    $enderecoPartida      = $request->input('enderecoPartida');
+    $cepPartida           = $request->input('cepPartida');
+    $numeroPartida        = $request->input('numeroPartida');
+    $complementoPartida   = $request->input('complementoPartida');
 
-            DB::table('PARADAS')->insert($paradasData);
+    $enderecoCompletoPartida = "{$enderecoPartida['rua']}, {$numeroPartida}, {$enderecoPartida['bairro']}, {$enderecoPartida['cidade']} - {$enderecoPartida['estado']}, {$cepPartida}";
+    if ($complementoPartida) {
+        $enderecoCompletoPartida .= ", $complementoPartida";
+    }
+
+    [$latPartida, $lngPartida] = $this->buscarLatLongGoogle($enderecoCompletoPartida);
+
+    // ------- CHEGADA -------
+    $enderecoChegada      = $request->input('enderecoChegada');
+    $cepChegada           = $request->input('cepChegada');
+    $numeroChegada        = $request->input('numeroChegada');
+    $complementoChegada   = $request->input('complementoChegada');
+
+    $enderecoCompletoChegada = "{$enderecoChegada['rua']}, {$numeroChegada}, {$enderecoChegada['bairro']}, {$enderecoChegada['cidade']} - {$enderecoChegada['estado']}, {$cepChegada}";
+    if ($complementoChegada) {
+        $enderecoCompletoChegada .= ", $complementoChegada";
+    }
+
+    [$latChegada, $lngChegada] = $this->buscarLatLongGoogle($enderecoCompletoChegada);
+
+    // ------- PARADAS -------
+    $paradas = $request->input('paradas', []);
+    $paradasData = [];
+    $codParada = 1;
+
+    foreach ($paradas as $parada) {
+        $end = $parada['endereco'];
+        $cep   = $parada['cep'] ?? '';
+        $numero = $parada['numero'] ?? '';
+        $compl = $parada['complemento'] ?? null;
+
+        $enderecoCompletoParada = "{$end['rua']}, {$numero}, {$end['bairro']}, {$end['cidade']} - {$end['estado']}, {$cep}";
+        if ($compl) {
+            $enderecoCompletoParada .= ", $compl";
         }
 
-        return response()->json(['success' => true, 'message' => 'Rota e paradas cadastradas com sucesso!'], 200);
+        [$lat, $lng] = $this->buscarLatLongGoogle($enderecoCompletoParada);
+
+        $paradasData[] = [
+            'COD_ROTA'           => $codRota,
+            'COD_PARADA'         => $codParada,
+            'CEP_PARADA'         => $cep,
+            'NUMERO_PARADA'      => $numero,
+            'DESCRICAO_PARADA'   => $parada['descricao'] ?? null,
+            'COMPLEMENTO_PARADA' => $compl,
+            'RUA_PARADA'         => $end['rua'],
+            'BAIRRO_PARADA'      => $end['bairro'],
+            'CIDADE_PARADA'      => $end['cidade'],
+            'ESTADO_PARADA'      => $end['estado'],
+            'LATITUDE_PARADA'    => $lat,
+            'LONGITUDE_PARADA'   => $lng,
+        ];
+        $codParada++;
     }
+
+    // ------- INSERE NOS BANCOS -------
+    DB::table('ROTAS')->insert([
+        'COD_ROTA'      => $codRota,
+        'cod_veiculo'   => $cod_veiculo,
+        'cod_parada'    => 1,
+        'cod_chegada'   => $codRota,
+        'cod_partida'   => $codRota,
+        'cod_motorista' => $request->input('motorista'),
+    ]);
+
+    DB::table('PARTIDAS')->insert([
+        'cod_rota'            => $codRota,
+        'cod_partida'         => $codRota,
+        'cep_partida'         => $cepPartida,
+        'numero_partida'      => $numeroPartida,
+        'descricao_partida'   => $request->input('descricaoPartida'),
+        'complemento_partida' => $complementoPartida,
+        'rua_partida'         => $enderecoPartida['rua'],
+        'bairro_partida'      => $enderecoPartida['bairro'],
+        'cidade_partida'      => $enderecoPartida['cidade'],
+        'estado_partida'      => $enderecoPartida['estado'],
+        'latitude_partida'    => $latPartida,
+        'longitude_partida'   => $lngPartida,
+        'data_hora_partida'   => now(),
+    ]);
+
+    DB::table('CHEGADAS')->insert([
+        'cod_rota'             => $codRota,
+        'cod_chegada'          => $codRota,
+        'cep_chegada'          => $cepChegada,
+        'numero_chegada'       => $numeroChegada,
+        'descricao_chegada'    => $request->input('descricaoChegada'),
+        'complemento_chegada'  => $complementoChegada,
+        'rua_chegada'          => $enderecoChegada['rua'],
+        'bairro_chegada'       => $enderecoChegada['bairro'],
+        'cidade_chegada'       => $enderecoChegada['cidade'],
+        'estado_chegada'       => $enderecoChegada['estado'],
+        'latitude_chegada'     => $latChegada,
+        'longitude_chegada'    => $lngChegada,
+        'data_hora_chegada'    => now()->addHours(2),
+    ]);
+
+    if (!empty($paradasData)) {
+        DB::table('PARADAS')->insert($paradasData);
+    }
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Rota e paradas cadastradas com sucesso!'
+    ], 200);
+}
 
 
     public function getRotas(Request $request)
@@ -262,6 +339,33 @@ public function insertPartida(Request $request)
         $rotas = array_values($rotas);
 
         return response()->json($rotas, 200);
+    }
+    public function getRotasMobile(Request $request)
+    {
+        // dd($request->all());
+        $info = $request->all();
+        $cod_rota  = $info['routeInfo'][0]['cod_rota'];
+
+        $rotasRaw = DB::table('ROTAS as r')
+            ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
+            ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
+            ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
+            ->select(
+                'p.latitude_partida',
+                'p.longitude_partida',
+                'c.latitude_chegada',
+                'c.longitude_chegada',
+                'pr.latitude_parada',
+                'pr.longitude_parada',
+                'r.cod_rota',
+                'r.cod_veiculo',
+                'r.status',
+                'r.desc_status',
+            )
+            ->where('r.cod_rota', $cod_rota)
+            ->get();
+
+        return response()->json($rotasRaw, 200);
     }
 
 

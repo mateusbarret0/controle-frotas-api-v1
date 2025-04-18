@@ -45,6 +45,7 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
     Route::post('rota/linkMotorista', 'App\Http\Controllers\RotasController@linkMotorista');
     Route::post('rota/hodometro/insert', 'App\Http\Controllers\RotasController@insertHodometro');
     Route::post('rota/insertPartida', 'App\Http\Controllers\RotasController@insertPartida');
+    Route::post('rota/getRotaMobile', 'App\Http\Controllers\RotasController@getRotasMobile');
 
     Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
     

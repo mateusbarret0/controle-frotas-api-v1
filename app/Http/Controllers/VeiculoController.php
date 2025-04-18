@@ -186,7 +186,7 @@ class VeiculoController extends Controller
         $motoristas = DB::table('usuarios as u')
             ->join('tipos_usuario as t', 'u.id_tipo_usuario', '=', 't.id')
             ->select(
-                'u.id',
+                'u.cod_usur',
                 'u.nome',
                 't.descricao'
             )
