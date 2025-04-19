@@ -338,7 +338,11 @@ public function insertRotas(Request $request)
 
         $rotas = array_values($rotas);
 
-        return response()->json($rotas, 200);
+        return response()->json([
+            'success' => true,
+            'message' => 'Rota e paradas cadastradas com sucesso!',
+            'rotas' => $rotas,
+        ], 200);
     }
     public function getRotasMobile(Request $request)
     {
@@ -347,25 +351,92 @@ public function insertRotas(Request $request)
         $cod_rota  = $info['routeInfo'][0]['cod_rota'];
 
         $rotasRaw = DB::table('ROTAS as r')
-            ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
-            ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
-            ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
-            ->select(
-                'p.latitude_partida',
-                'p.longitude_partida',
-                'c.latitude_chegada',
-                'c.longitude_chegada',
-                'pr.latitude_parada',
-                'pr.longitude_parada',
-                'r.cod_rota',
-                'r.cod_veiculo',
-                'r.status',
-                'r.desc_status',
-            )
-            ->where('r.cod_rota', $cod_rota)
-            ->get();
+    ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
+    ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
+    ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
+    ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
+    ->select(
+        'p.latitude_partida',
+        'p.longitude_partida',
+        'p.rua_partida',
+        'p.cidade_partida',
+        'p.estado_partida',
+        'p.numero_partida',
+        'c.latitude_chegada',
+        'c.longitude_chegada',
+        'c.rua_chegada',
+        'c.cidade_chegada',
+        'c.estado_chegada',
+        'c.numero_chegada',
+        'pr.cod_parada',
+        'pr.rua_parada',
+        'pr.cidade_parada',
+        'pr.estado_parada',
+        'pr.numero_parada',
+        'pr.latitude_parada',
+        'pr.longitude_parada',
+        'r.cod_rota',
+        'r.cod_veiculo',
+        'r.status',
+        'r.desc_status',
+        'v.modelo',
+        'v.placa',
+        'v.capacidade',
+        'v.ano'
+    )
+    ->where('r.cod_rota', $cod_rota)
+    ->get();
 
-        return response()->json($rotasRaw, 200);
+$rotaBase = $rotasRaw->first();
+
+$rota = [
+    'cod_rota' => $rotaBase->cod_rota,
+    'partida' => [
+        'latitude' => $rotaBase->latitude_partida,
+        'longitude' => $rotaBase->longitude_partida,
+        'rua' => $rotaBase->rua_partida,
+        'numero' => $rotaBase->numero_partida,
+        'cidade' => $rotaBase->cidade_partida,
+        'estado' => $rotaBase->estado_partida,
+    ],
+    'chegada' => [
+        'latitude' => $rotaBase->latitude_chegada,
+        'longitude' => $rotaBase->longitude_chegada,
+        'rua' => $rotaBase->rua_chegada,
+        'numero' => $rotaBase->numero_chegada,
+        'cidade' => $rotaBase->cidade_chegada,
+        'estado' => $rotaBase->estado_chegada,
+    ],
+    'veiculo' => [
+        'cod_veiculo' => $rotaBase->cod_veiculo,
+        'modelo' => $rotaBase->modelo,
+        'placa' => $rotaBase->placa,
+        'capacidade' => $rotaBase->capacidade,
+        'ano' => $rotaBase->ano,
+    ],
+    'status' => $rotaBase->status,
+    'desc_status' => $rotaBase->desc_status,
+    'paradas' => [],
+];
+
+foreach ($rotasRaw as $item) {
+    if ($item->cod_parada !== null) {
+        $rota['paradas'][] = [
+            'cod_parada' => $item->cod_parada,
+            'rua' => $item->rua_parada,
+            'numero' => $item->numero_parada,
+            'cidade' => $item->cidade_parada,
+            'estado' => $item->estado_parada,
+            'latitude' => $item->latitude_parada,
+            'longitude' => $item->longitude_parada,
+        ];
+    }
+}
+return response()->json([
+    'success' => true,
+    'message' => 'Rota carregada com sucesso!',
+    'rota' => $rota,
+], 200);
     }
 
 
