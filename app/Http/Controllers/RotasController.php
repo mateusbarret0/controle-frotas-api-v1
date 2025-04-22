@@ -700,10 +700,9 @@ public function insertRouteSteps(Request $request)
 public function fechViagens(Request $request)
 {
     $info = $request->all();
+    $codMotorista = $info['codMotorista'];
+    $idTipoUsuario = $info['idTipoUsuario'];
 
-    $cod_motorista = $info['codMotorista'];
-
-    
 
     $viagens = DB::table('ROTAS as r')
     ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
@@ -721,9 +720,11 @@ public function fechViagens(Request $request)
         'ri.km_percorrido',
         'ri.num_paradas',
     )
-    // ->where('r.cod_motorista', $cod_motorista)
+    ->when($idTipoUsuario == 2, function ($query) use ($codMotorista) {
+        return $query->where('r.cod_motorista', $codMotorista);
+    })
     ->get();
-    
+
 
     return response()->json(['success' => true, 'message' => 'Viagens carregadas com sucesso!', 'viagens' => $viagens], 200);
 }
