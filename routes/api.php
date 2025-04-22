@@ -46,7 +46,11 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
     Route::post('rota/hodometro/insert', 'App\Http\Controllers\RotasController@insertHodometro');
     Route::post('rota/insertPartida', 'App\Http\Controllers\RotasController@insertPartida');
     Route::post('rota/getRotaMobile', 'App\Http\Controllers\RotasController@getRotasMobile');
-
+    Route::post('directions', 'App\Http\Controllers\RotasController@getDirections');
+    Route::post('rota/horaPartida', 'App\Http\Controllers\RotasController@insertHoraPartida');
+    Route::post('rota/horaChegada', 'App\Http\Controllers\RotasController@insertHoraChegada');
+    Route::get('rota/duracao', 'App\Http\Controllers\RotasController@getDuracaoRota');
+    
     Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
     
 // });

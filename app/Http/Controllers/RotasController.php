@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use DateTime;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -223,7 +225,7 @@ public function insertRotas(Request $request)
         'estado_chegada'       => $enderecoChegada['estado'],
         'latitude_chegada'     => $latChegada,
         'longitude_chegada'    => $lngChegada,
-        'data_hora_chegada'    => now()->addHours(2),
+        // 'data_hora_chegada'    => now()->addHours(2),
     ]);
 
     if (!empty($paradasData)) {
@@ -581,4 +583,87 @@ return response()->json([
 
         return response()->json(['success' => true, 'message' => 'Quilometragem registrada com sucesso!'], 200);
     }
+    
+
+    public function getDirections(Request $request)
+{  
+    $waypoints = collect($request->stops)
+            ->map(fn($p) => "{$p['latitude']},{$p['longitude']}")
+            ->join('|');
+
+        $origin = "{$request->start['latitude']},{$request->start['longitude']}";
+        $destination = "{$request->end['latitude']},{$request->end['longitude']}";
+
+        $client = new Client();
+        $key = 'AIzaSyDBwpZs8ef-S4luuIvphLWNSSs5XCga_kc';
+        $url = "https://maps.googleapis.com/maps/api/directions/json?origin=$origin"
+             . "&destination=$destination&key=$key&waypoints=$waypoints&language=pt-BR&mode=driving&optimizeWaypoints=false";
+
+        $response = $client->get($url);
+        return response()->json(json_decode($response->getBody(), true));
+    }
+
+    public function insertHoraPartida(Request $request)
+    {
+        $info = $request->all();
+        // dd($info);
+
+        $cod_rota = $info['cod_rota'];
+        $hora_partida = $info['hora_partida'];
+
+        DB::table('PARTIDAS')
+            ->where('cod_rota', $cod_rota)
+            ->update([
+                'data_hora_partida' => $hora_partida,
+            ]);
+
+        return response()->json(['success' => true, 'message' => 'Hora de partida atualizada com sucesso!'], 200);
+    }
+    public function insertHoraChegada(Request $request)
+    {
+        $info = $request->all();
+
+        $cod_rota = $info['cod_rota'];
+        $hora_chegada = $info['hora_chegada'];
+
+        DB::table('CHEGADAS')
+            ->where('cod_rota', $cod_rota)
+            ->update([
+                'data_hora_chegada' => $hora_chegada,
+            ]);
+
+        return response()->json(['success' => true, 'message' => 'Hora de chegada atualizada com sucesso!'], 200);
+    }
+    public function getDuracaoRota(Request $request)
+{
+    $info = $request->all();
+    $cod_rota = $info['cod_rota'];
+
+    $horas = DB::table('ROTAS as r')
+        ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
+        ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
+        ->select(
+            'p.data_hora_partida',
+            'c.data_hora_chegada',
+            'r.cod_rota'
+        )
+        ->where('r.cod_rota', $cod_rota)
+        ->get();
+
+    if ($horas->isNotEmpty()) {
+        $hora = $horas->first();
+
+        $dataHoraPartida = new DateTime($hora->data_hora_partida);
+        $dataHoraChegada = new DateTime($hora->data_hora_chegada);
+
+        $intervalo = $dataHoraPartida->diff($dataHoraChegada);
+
+        $duracao = $intervalo->format('%H:%I:%S');
+
+        return response()->json(['success' => true, 'duracao' => $duracao], 200);
+    }
+
+
+    return response()->json(['success' => false, 'message' => 'Rota não encontrada'], 404);
+}
 }
