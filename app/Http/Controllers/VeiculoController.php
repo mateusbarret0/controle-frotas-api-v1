@@ -79,8 +79,6 @@ class VeiculoController extends Controller
     {
         $lastCodVeiculo = DB::table('VEICULOS')->max('cod_veiculo');
         $newCodVeiculo = $lastCodVeiculo + 1;
-        $lastCodEmpresa = DB::table('EMPRESAS')->max('cod_empresa');
-        $newCodEmpresa = $lastCodEmpresa + 1;
         $veiculo = DB::table('VEICULOS')->insert([
             'cod_veiculo' => $newCodVeiculo,
             'modelo' => $request->input('modelo'),
@@ -90,16 +88,8 @@ class VeiculoController extends Controller
             // 'dt_prox_manu' => $request->input('dataProxManutencao'),
             // 'dt_ultim_manu' => $request->input('dataUltManutencao'),
             'status' => 'disponivel',
-            'cod_motorista' => $request->input('motorista'),
             'id_tipo_veiculo' => $request->input('tipoVeiculo'),
-            'cod_empresa' => $newCodEmpresa,
         ]);
-
-        $empresa = DB::table('EMPRESAS')->insert([
-            'cod_veiculo' => $newCodVeiculo,
-            'cod_empresa' => $newCodEmpresa,
-            'nome' => $request->input('empresa'),
-        ]);;
 
         return response()->json(['success' => true, 'message' => 'Veículo cadastrado com sucesso!'], 200);
     }

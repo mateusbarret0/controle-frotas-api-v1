@@ -703,6 +703,8 @@ public function fechViagens(Request $request)
 
     $cod_motorista = $info['codMotorista'];
 
+    
+
     $viagens = DB::table('ROTAS as r')
     ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
     ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
@@ -719,7 +721,7 @@ public function fechViagens(Request $request)
         'ri.km_percorrido',
         'ri.num_paradas',
     )
-    ->where('r.cod_motorista', $cod_motorista)
+    // ->where('r.cod_motorista', $cod_motorista)
     ->get();
     
 

@@ -10,44 +10,19 @@ class UsuarioController extends Controller
     public function insertUsuario(Request $request)
     {
         // dd($request);
-        $lastCodUsur = DB::table('USUARIOS')->max('cod_usuario');
+        $lastCodUsur = DB::table('USUARIOS')->max('cod_usur');
         $newCodUsur = $lastCodUsur + 1;
 
         $usuario = DB::table('USUARIOS')->insert([
-            'cod_usuario' => $newCodUsur, 
+            'cod_usur' => $newCodUsur, 
             'nome' => $request->input('nome'),
             'cpf' => $request->input('cpf'),
             'email' => $request->input('email'),
             'status' => $request->input('status'),
-            'cod_tipo_usuario' => $request->input('tipoUsuario'),
-            'dt_cadastro_usur' => now(),
-            'senha' => '123456', 
+            'id_tipo_usuario' => $request->input('tipoUsuario'),
+            'dt_cadastro' => now(),
+            'password' => '123456', 
         ]);
-
-        switch ($request->input('tipoUsuario')) {
-            case 1:
-                $tipoUsuario = 'Funcionario';
-                break;
-            case 2:
-                $tipoUsuario = 'Terceiro';
-                break;
-            case 3:
-                $tipoUsuario = 'Motorista';
-                break;
-            default:
-                $tipoUsuario = null;
-                break;
-        }
-
-        if ($tipoUsuario) {
-            DB::table('tipos_usuario')->insert([
-                'cod_usuario' => $newCodUsur,
-                'cod_tipo_usuario' => $request->input('tipoUsuario'),
-                'descricao' => $tipoUsuario,
-            ]);
-        } else {
-            return response()->json(['error' => 'Tipo de usuário inválido.'], 400);
-        }
         return response()->json(['message' => 'Usuário salvo com sucesso!'], 201);
     }
 
@@ -55,9 +30,9 @@ class UsuarioController extends Controller
     public function getUsuarios(Request $request)
 {
     $query = DB::table('usuarios as usur')
-        ->Leftjoin('tipos_usuario as tipos', 'usur.cod_usuario', '=', 'tipos.cod_usuario')
+        ->Leftjoin('tipos_usuario as tipos', 'usur.id_tipo_usuario', '=', 'tipos.id')
         ->select(
-            'usur.cod_usuario',
+            'usur.cod_usur',
             'usur.nome',
             'usur.cpf',
             'usur.email',
@@ -130,8 +105,7 @@ class UsuarioController extends Controller
 }
 public function editUsuarios(Request $request)
 {
-    $usuario = DB::table('usuarios')->where('cod_usuario', $request->codUsur)->first();
-    // dd($request);
+    $usuario = DB::table('usuarios')->where('cpf', $request->cpf)->first();
     if (!$usuario) {
         return response()->json([
             'status' => 'error',
@@ -139,31 +113,14 @@ public function editUsuarios(Request $request)
         ], 404);
     }
 
-    switch ($request->tipo) {
-        case 1:
-            $tipoUsuario = 'Funcionario';
-            break;
-        case 2:
-            $tipoUsuario = 'Terceiro';
-            break;
-        case 3:
-            $tipoUsuario = 'Motorista';
-            break;
-        default:
-            $tipoUsuario = null;
-            break;
-    }
-
     DB::table('usuarios as usur')
-    ->leftJoin('tipos_usuario as tipos', 'usur.cod_usuario', '=', 'tipos.cod_usuario')
-    ->where('usur.cod_usuario', $request->codUsur)  
+    ->where('usur.cod_usur', $request->codUsur)  
     ->update([
         'usur.nome' => $request->nome,
         'usur.cpf' => $request->cpf,
         'usur.email' => $request->email,
         'usur.status' => $request->status,
-        'tipos.cod_tipo_usuario' => $request->tipo,
-        'tipos.descricao' => $tipoUsuario,
+        'usur.id_tipo_usuario' => $request->tipo,
     ]);
 
 
