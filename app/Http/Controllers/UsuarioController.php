@@ -84,9 +84,9 @@ class UsuarioController extends Controller
 
     // dd($request);
     $usur = DB::table('usuarios as usur')
-        ->leftJoin('tipos_usuario as tipos', 'usur.id', '=', 'tipos.id')
+        ->leftJoin('tipos_usuario as tipos', 'usur.id_tipo_usuario', '=', 'tipos.id')
         ->select(
-            'usur.id',
+            'usur.cod_usur',
             'usur.nome',
             'usur.cpf',
             'usur.email',

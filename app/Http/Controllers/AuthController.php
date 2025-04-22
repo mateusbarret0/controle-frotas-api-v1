@@ -22,6 +22,7 @@ class AuthController extends Controller
     
         $token = auth('api')->login($usuario);
     
+       
         return response()->json([
             'success' => true,
             'message' => 'Login bem-sucedido!',
@@ -43,7 +44,7 @@ public function logout()
         $status = $info['status'];
     
         DB::table('usuarios')
-            ->where('id', $userId)
+            ->where('cod_usur', $userId)
             ->update(['termo' => $status]);
     
             return response()->json([
