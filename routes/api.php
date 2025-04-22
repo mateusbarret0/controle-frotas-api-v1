@@ -50,6 +50,10 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
     Route::post('rota/horaPartida', 'App\Http\Controllers\RotasController@insertHoraPartida');
     Route::post('rota/horaChegada', 'App\Http\Controllers\RotasController@insertHoraChegada');
     Route::get('rota/duracao', 'App\Http\Controllers\RotasController@getDuracaoRota');
+    Route::post('rota/insertRouteInfo', 'App\Http\Controllers\RotasController@insertRouteInfo');
+    Route::post('rota/insertRouteSteps', 'App\Http\Controllers\RotasController@insertRouteSteps');
+    Route::get('fetch/viagens', 'App\Http\Controllers\RotasController@fechViagens');
+    Route::post('rota/atualizarStatus', 'App\Http\Controllers\RotasController@editStatusRotaMobile');
     
     Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
     
