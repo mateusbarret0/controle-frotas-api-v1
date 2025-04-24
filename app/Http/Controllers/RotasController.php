@@ -123,17 +123,17 @@ public function insertRotas(Request $request)
         ->where('cod_veiculo', $cod_veiculo)
         ->count() + 1;
 
-    $enderecoPartida      = $request->input('enderecoPartida');
-    $cepPartida           = $request->input('cepPartida');
-    $numeroPartida        = $request->input('numeroPartida');
-    $complementoPartida   = $request->input('complementoPartida');
+    // $enderecoPartida      = $request->input('enderecoPartida');
+    // $cepPartida           = $request->input('cepPartida');
+    // $numeroPartida        = $request->input('numeroPartida');
+    // $complementoPartida   = $request->input('complementoPartida');
 
-    $enderecoCompletoPartida = "{$enderecoPartida['rua']}, {$numeroPartida}, {$enderecoPartida['bairro']}, {$enderecoPartida['cidade']} - {$enderecoPartida['estado']}, {$cepPartida}";
-    if ($complementoPartida) {
-        $enderecoCompletoPartida .= ", $complementoPartida";
-    }
+    // $enderecoCompletoPartida = "{$enderecoPartida['rua']}, {$numeroPartida}, {$enderecoPartida['bairro']}, {$enderecoPartida['cidade']} - {$enderecoPartida['estado']}, {$cepPartida}";
+    // if ($complementoPartida) {
+    //     $enderecoCompletoPartida .= ", $complementoPartida";
+    // }
 
-    [$latPartida, $lngPartida] = $this->buscarLatLongGoogle($enderecoCompletoPartida);
+    // [$latPartida, $lngPartida] = $this->buscarLatLongGoogle($enderecoCompletoPartida);
 
     $enderecoChegada      = $request->input('enderecoChegada');
     $cepChegada           = $request->input('cepChegada');
@@ -190,21 +190,21 @@ public function insertRotas(Request $request)
         'cod_motorista' => $request->input('motorista'),
     ]);
 
-    DB::table('PARTIDAS')->insert([
-        'cod_rota'            => $codRota,
-        'cod_partida'         => $codRota,
-        'cep_partida'         => $cepPartida,
-        'numero_partida'      => $numeroPartida,
-        'descricao_partida'   => $request->input('descricaoPartida'),
-        'complemento_partida' => $complementoPartida,
-        'rua_partida'         => $enderecoPartida['rua'],
-        'bairro_partida'      => $enderecoPartida['bairro'],
-        'cidade_partida'      => $enderecoPartida['cidade'],
-        'estado_partida'      => $enderecoPartida['estado'],
-        'latitude_partida'    => $latPartida,
-        'longitude_partida'   => $lngPartida,
-        'data_hora_partida'   => now(),
-    ]);
+    // DB::table('PARTIDAS')->insert([
+    //     'cod_rota'            => $codRota,
+    //     'cod_partida'         => $codRota,
+    //     'cep_partida'         => $cepPartida,
+    //     'numero_partida'      => $numeroPartida,
+    //     'descricao_partida'   => $request->input('descricaoPartida'),
+    //     'complemento_partida' => $complementoPartida,
+    //     'rua_partida'         => $enderecoPartida['rua'],
+    //     'bairro_partida'      => $enderecoPartida['bairro'],
+    //     'cidade_partida'      => $enderecoPartida['cidade'],
+    //     'estado_partida'      => $enderecoPartida['estado'],
+    //     'latitude_partida'    => $latPartida,
+    //     'longitude_partida'   => $lngPartida,
+    //     'data_hora_partida'   => now(),
+    // ]);
 
     DB::table('CHEGADAS')->insert([
         'cod_rota'             => $codRota,
@@ -240,7 +240,7 @@ public function insertRotas(Request $request)
 
         $rotasRaw = DB::table('ROTAS as r')
             ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
-            ->join('PARTIDAS as p', 'r.cod_partida', '=', 'p.cod_partida')
+            ->leftjoin('PARTIDAS as p', 'r.cod_partida', '=', 'p.cod_partida')
             ->join('CHEGADAS as c', 'r.cod_chegada', '=', 'c.cod_chegada')
             ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
             ->select(
@@ -703,7 +703,6 @@ public function fechViagens(Request $request)
     $codMotorista = $info['codMotorista'];
     $idTipoUsuario = $info['idTipoUsuario'];
 
-
     $viagens = DB::table('ROTAS as r')
     ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
     ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
@@ -723,6 +722,7 @@ public function fechViagens(Request $request)
     ->when($idTipoUsuario == 2, function ($query) use ($codMotorista) {
         return $query->where('r.cod_motorista', $codMotorista);
     })
+    ->distinct()
     ->get();
 
 
