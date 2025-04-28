@@ -934,6 +934,7 @@ public function editStatusRotaMobile(Request $request)
 {
     $info = $request->all();
     $codRota = $info['codRota'];
+    $codSuperv = $info['codSuperv'];
     $status = $info['status'];
     $descricao = $info['motivo'];
     
@@ -941,10 +942,164 @@ public function editStatusRotaMobile(Request $request)
             ->where('cod_rota', $codRota)
             ->update([
                 'status' => $status,
-                'desc_status' => $descricao
+                'desc_status' => $descricao,
+                'cod_superv' => $codSuperv
             ]);
 
 
     return response()->json(['success' => true, 'message' => 'Status atualizado com sucesso!' ], 200);
 }
+    public function getStepsRota(Request $request)
+{
+    // dd($request->all());
+    $info = $request->all();
+    $cod_rota  = $info['codRota'];
+
+    
+
+    $rotasRaw = DB::table('ROTAS as r')
+        ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
+        ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
+        ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
+        ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
+        ->join('ROTA_STEPS as rs', 'r.cod_rota', '=', 'rs.cod_rota')
+        ->join('USUARIOS as u', 'r.cod_motorista', '=', 'u.cod_usur')
+        ->leftJoin('USUARIOS as u2', 'r.cod_superv', '=', 'u2.cod_usur')
+        ->select(
+            'p.latitude_partida',
+            'p.longitude_partida',
+            'p.rua_partida',
+            'p.cidade_partida',
+            'p.estado_partida',
+            'p.numero_partida',
+            'c.latitude_chegada',
+            'c.longitude_chegada',
+            'c.rua_chegada',
+            'c.cidade_chegada',
+            'c.estado_chegada',
+            'c.numero_chegada',
+            'pr.cod_parada',
+            'pr.rua_parada',
+            'pr.cidade_parada',
+            'pr.estado_parada',
+            'pr.numero_parada',
+            'pr.latitude_parada',
+            'pr.longitude_parada',
+            'r.cod_rota',
+            'r.cod_veiculo',
+            'r.status',
+            'r.desc_status',
+            'v.modelo',
+            'v.placa',
+            'v.capacidade',
+            'v.ano',
+            'rs.step_index',
+            'rs.start_lat',
+            'rs.start_lng',
+            'rs.end_lat',
+            'rs.end_lng',    
+            'rs.instruction',    
+            'rs.distance',
+            'u.nome as nome_motorista',
+            'u.cod_usur as codigo_motorista', 
+            'u2.nome as nome_supervisor',
+            'u2.cod_usur as codigo_supervisor'    
+        )
+        ->where('r.cod_rota', $cod_rota)
+        ->get();
+
+        $rotaBase = $rotasRaw->first();
+
+        $rota = [
+        'cod_rota' => $rotaBase->cod_rota,
+        'partida' => [
+            'latitude' => $rotaBase->latitude_partida,
+            'longitude' => $rotaBase->longitude_partida,
+            'rua' => $rotaBase->rua_partida,
+            'numero' => $rotaBase->numero_partida,
+            'cidade' => $rotaBase->cidade_partida,
+            'estado' => $rotaBase->estado_partida,
+        ],
+        'chegada' => [
+            'latitude' => $rotaBase->latitude_chegada,
+            'longitude' => $rotaBase->longitude_chegada,
+            'rua' => $rotaBase->rua_chegada,
+            'numero' => $rotaBase->numero_chegada,
+            'cidade' => $rotaBase->cidade_chegada,
+            'estado' => $rotaBase->estado_chegada,
+        ],
+        'veiculo' => [
+            'cod_veiculo' => $rotaBase->cod_veiculo,
+            'modelo' => $rotaBase->modelo,
+            'placa' => $rotaBase->placa,
+            'capacidade' => $rotaBase->capacidade,
+            'ano' => $rotaBase->ano,
+        ],
+        'motorista' => [
+            'nome_motorista' => $rotaBase->nome_motorista,
+            'codigo_motorista' => $rotaBase->codigo_motorista
+        ],
+        'supervisor' => [
+            'nome_supervisor' => $rotaBase->nome_supervisor,
+            'codigo_supervisor' => $rotaBase->codigo_supervisor
+        ],
+        'status' => $rotaBase->status,
+        'desc_status' => $rotaBase->desc_status,
+        'paradas' => [],
+        ];
+
+        foreach ($rotasRaw as $item) {
+        if ($item->cod_parada !== null) {
+            $rota['paradas'][] = [
+                'cod_parada' => $item->cod_parada,
+                'rua' => $item->rua_parada,
+                'numero' => $item->numero_parada,
+                'cidade' => $item->cidade_parada,
+                'estado' => $item->estado_parada,
+                'latitude' => $item->latitude_parada,
+                'longitude' => $item->longitude_parada,
+            ];
+        }
+        foreach ($rotasRaw as $item) {
+        if ($item->step_index !== null) {
+            $rota['steps'][] = [
+                'step_index' => $item->step_index,
+                'start_lat' => $item->start_lat,
+                'start_lng' => $item->start_lng,
+                'end_lat' => $item->end_lat,
+                'end_lng' => $item->end_lng,
+                'instruction' => $item->instruction,
+                'distance' => $item->distance,
+            ];
+        }
+        }
+
+        $horas = DB::table('ROTAS as r')
+        ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
+        ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
+        ->select(
+            'p.data_hora_partida',
+            'c.data_hora_chegada'
+        )
+        ->where('r.cod_rota', $cod_rota)
+        ->first();
+
+    if ($horas) {
+        $dataHoraPartida = new DateTime($horas->data_hora_partida);
+        $dataHoraChegada = new DateTime($horas->data_hora_chegada);
+
+        $intervalo = $dataHoraPartida->diff($dataHoraChegada);
+        $duracao = $intervalo->format('%H:%I:%S');
+
+        $rota['duracao'] = $duracao;
+    } else {
+        $rota['duracao'] = null;
+    }
+        return response()->json([
+            'success' => true,
+            'message' => 'Rota carregada com sucesso!',
+            'rota' => $rota,
+        ], 200);
+        }
+    }
 }

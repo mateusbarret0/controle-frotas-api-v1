@@ -57,6 +57,7 @@ Route::post('auth/login', 'App\Http\Controllers\AuthController@login');
     Route::get('fetch/viagens', 'App\Http\Controllers\RotasController@fetchViagens');
     Route::get('fetch/maisInfo/viagens', 'App\Http\Controllers\RotasController@fetchMaisInfoViagens');
     Route::post('rota/atualizarStatus', 'App\Http\Controllers\RotasController@editStatusRotaMobile');
+    Route::post('rota/getStepsRota', 'App\Http\Controllers\RotasController@getStepsRota');
     
     Route::get('get/relatorio/rotas', 'App\Http\Controllers\RelatoriosController@getRelatorioRotas');
     
