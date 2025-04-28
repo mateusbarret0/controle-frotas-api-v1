@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Log;
 use DateTime;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 class RotasController extends Controller
 {
@@ -120,7 +122,7 @@ public function insertRotas(Request $request)
     $cod_veiculo = $request->input('veiculo.cod_veiculo');
 
     $codRota = DB::table('ROTAS')
-        ->where('cod_veiculo', $cod_veiculo)
+        // ->where('cod_veiculo', $cod_veiculo)
         ->count() + 1;
 
     // $enderecoPartida      = $request->input('enderecoPartida');
@@ -233,6 +235,136 @@ public function insertRotas(Request $request)
 }
 
 
+public function updateRotas(Request $request)
+{
+    $info = $request->all();
+
+    if (empty($info['cod_rota'])) {
+        return response()->json(['success' => false, 'message' => 'Código da Rota é obrigatório.'], 400);
+    }
+
+    $cod_rota = $info['cod_rota'];
+    $cod_motorista = $info['cod_motorista'] ?? null;
+    $cod_veiculo = $info['cod_veiculo'] ?? null;
+
+    DB::beginTransaction(); 
+
+    try {
+        DB::table('ROTAS')
+            ->where('COD_ROTA', $cod_rota)
+            ->update([
+                'cod_motorista' => $cod_motorista,
+                'cod_veiculo'   => $cod_veiculo,
+            ]);
+
+        if (isset($info['chegada'])) {
+            $chegada = $info['chegada'];
+            $enderecoCompletoChegada = "{$chegada['rua']}, {$chegada['numero']}, {$chegada['bairro']}, {$chegada['cidade']} - {$chegada['estado']}, {$chegada['cep']}";
+            if (!empty($chegada['complemento'])) {
+                $enderecoCompletoChegada .= ", {$chegada['complemento']}";
+            }
+
+            [$latChegada, $lngChegada] = $this->buscarLatLongGoogle($enderecoCompletoChegada);
+
+            DB::table('CHEGADAS')
+                ->where('cod_rota', $cod_rota)
+                ->update([
+                    'cep_chegada'         => $chegada['cep'] ?? null,
+                    'numero_chegada'      => $chegada['numero'] ?? null,
+                    'descricao_chegada'   => $chegada['descricao'] ?? null,
+                    'complemento_chegada' => $chegada['complemento'] ?? null,
+                    'rua_chegada'         => $chegada['rua'] ?? null,
+                    'bairro_chegada'      => $chegada['bairro'] ?? null,
+                    'cidade_chegada'      => $chegada['cidade'] ?? null,
+                    'estado_chegada'      => $chegada['estado'] ?? null,
+                    'latitude_chegada'    => $latChegada,
+                    'longitude_chegada'   => $lngChegada,
+                ]);
+        }
+
+        $paradasInput = $info['paradas'] ?? [];
+        $codParadasInput = []; 
+
+        $paradasExistentesIds = DB::table('PARADAS')
+                                  ->where('cod_rota', $cod_rota)
+                                  ->pluck('COD_PARADA') 
+                                  ->toArray(); 
+
+        foreach ($paradasInput as $index => $parada) {
+            $end = $parada;
+            $cep   = $parada['cep'] ?? null;
+            $numero = $parada['numero'] ?? null;
+            $compl = $parada['complemento'] ?? null;
+
+            $enderecoCompletoParada = "{$end['rua']}, {$numero}, {$end['bairro']}, {$end['cidade']} - {$end['estado']}, {$cep}";
+            if ($compl) {
+                $enderecoCompletoParada .= ", $compl";
+            }
+
+            [$lat, $lng] = $this->buscarLatLongGoogle($enderecoCompletoParada);
+
+            $paradaData = [
+                'COD_ROTA'           => $cod_rota, 
+                'CEP_PARADA'         => $cep,
+                'NUMERO_PARADA'      => $numero,
+                'DESCRICAO_PARADA'   => $parada['descricao'] ?? null,
+                'COMPLEMENTO_PARADA' => $compl,
+                'RUA_PARADA'         => $end['rua'] ?? null,
+                'BAIRRO_PARADA'      => $end['bairro'] ?? null,
+                'CIDADE_PARADA'      => $end['cidade'] ?? null,
+                'ESTADO_PARADA'      => $end['estado'] ?? null,
+                'LATITUDE_PARADA'    => $lat,
+                'LONGITUDE_PARADA'   => $lng,
+            ];
+
+            if (isset($parada['cod_parada'])) {
+                $cod_parada_atual = $parada['cod_parada'];
+                $codParadasInput[] = $cod_parada_atual; 
+
+                DB::table('PARADAS')
+                    ->where('cod_rota', $cod_rota)
+                    ->where('COD_PARADA', $cod_parada_atual)
+                    ->update($paradaData); 
+
+            } else {
+                $nextCodParada = (DB::table('PARADAS')->where('cod_rota', $cod_rota)->max('COD_PARADA') ?? 0) + 1;
+
+                $paradaData['COD_PARADA'] = $nextCodParada; 
+
+                DB::table('PARADAS')->insert($paradaData);
+
+                
+            }
+        } 
+
+        $paradasParaDeletarIds = array_diff($paradasExistentesIds, $codParadasInput);
+
+        if (!empty($paradasParaDeletarIds)) {
+            DB::table('PARADAS')
+                ->where('cod_rota', $cod_rota)
+                ->whereIn('COD_PARADA', $paradasParaDeletarIds)
+                ->delete();
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Rota atualizada com sucesso!'
+        ], 200);
+
+    } catch (Throwable $e) {
+        DB::rollBack();
+
+        Log::error("Erro ao atualizar rota {$cod_rota}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Ocorreu um erro ao atualizar a rota.'
+        ], 500); 
+    }
+}
+
     public function getRotas(Request $request)
     {
         // dd($request->all());
@@ -243,6 +375,8 @@ public function insertRotas(Request $request)
             ->leftjoin('PARTIDAS as p', 'r.cod_partida', '=', 'p.cod_partida')
             ->join('CHEGADAS as c', 'r.cod_chegada', '=', 'c.cod_chegada')
             ->leftjoin('PARADAS as pr', 'r.cod_rota', '=', 'pr.cod_rota')
+            ->leftJoin('ROTA_INFO as ri', 'r.cod_rota', '=', 'ri.cod_rota')
+            ->join('USUARIOS as u', 'r.cod_motorista', '=', 'u.cod_usur')
             ->select(
                 'r.cod_rota',
                 'r.cod_veiculo',
@@ -274,7 +408,10 @@ public function insertRotas(Request $request)
                 'pr.rua_parada as ruaParada',
                 'pr.bairro_parada as bairroParada',
                 'pr.cidade_parada as cidadeParada',
-                'pr.estado_parada as estadoParada'
+                'pr.estado_parada as estadoParada',
+                'ri.km_percorrido',
+                'u.nome as motorista_nome',
+                'u.cod_usur'
             )
             ->when($cod_veiculo, function ($query, $cod_veiculo) {
                 $query->where('v.cod_veiculo', $cod_veiculo);
@@ -291,6 +428,11 @@ public function insertRotas(Request $request)
                     'cod_veiculo' => $row->cod_veiculo,
                     'status' => $row->status,
                     'desc_status' => $row->desc_status,
+                    'km_percorrido' => $row->km_percorrido,
+                    'motorista' => [
+                        'cod_motorista' => $row->cod_usur,
+                        'nome' => $row->motorista_nome,
+                    ],
                     'partida' => [
                         'cep' => $row->cep_partida,
                         'numero' => $row->numero_partida,
@@ -444,6 +586,7 @@ return response()->json([
         $rotas = DB::table('rotas')
             ->select(
                 'cod_rota',
+                'obs_adicional'
             )
             ->where('cod_veiculo', $cod_veiculo)
             ->where('cod_rota', $cod_rota)
@@ -507,10 +650,7 @@ return response()->json([
             ->where('cod_veiculo', $cod_veiculo)
             ->where('cod_rota', $cod_rota)
             ->update([
-                'DESVIOS' => $request->input('desvios'),
-                'PARADAS' => $request->input('paradas'),
-                'INCIDENTES' => $request->input('incidentes'),
-                'ROTA_ALTERNATIVA' => $request->input('rotaAlternativa'),
+                'obs_adicional' => $request->input('observacoesAdicionais'),
             ]);
 
         return response()->json(['success' => true, 'message' => 'Observações atualizadas com sucesso!'], 200);
@@ -595,21 +735,36 @@ return response()->json([
     }
 
     public function insertHoraPartida(Request $request)
-    {
-        $info = $request->all();
-        // dd($info);
+{
+    $info = $request->all();
+    // dd($info);
 
-        $cod_rota = $info['cod_rota'];
-        $hora_partida = $info['hora_partida'];
+    $cod_rota = $info['cod_rota'];
+    $hora_partida = $info['hora_partida'];
 
-        DB::table('PARTIDAS')
-            ->where('cod_rota', $cod_rota)
+    DB::table('PARTIDAS')
+        ->where('cod_rota', $cod_rota)
+        ->update([
+            'data_hora_partida' => $hora_partida,
+        ]);
+
+    $cod_veiculo = DB::table('ROTAS')
+        ->where('cod_rota', $info['cod_rota'])
+        ->value('cod_veiculo');  
+
+    if ($cod_veiculo) {
+        DB::table('VEICULOS')
+            ->where('cod_veiculo', $cod_veiculo)
             ->update([
-                'data_hora_partida' => $hora_partida,
+                'status' => 'Indisponivel',
+                'obs_status' => 'Veículo em Trânsito',
             ]);
-
-        return response()->json(['success' => true, 'message' => 'Hora de partida atualizada com sucesso!'], 200);
+    } else {
+        return response()->json(['success' => false, 'message' => 'Veículo não encontrado para a rota especificada.'], 404);
     }
+
+    return response()->json(['success' => true, 'message' => 'Hora de partida atualizada com sucesso!'], 200);
+}
     public function insertHoraChegada(Request $request)
     {
         $info = $request->all();
@@ -673,6 +828,22 @@ public function insertRouteInfo(Request $request)
         'data_hora_chegada' => $info['data_hora_fim'],
     ]);
 
+    $cod_veiculo = DB::table('ROTAS')
+        ->where('cod_rota', $info['cod_rota'])
+        ->value('cod_veiculo');  
+
+    if ($cod_veiculo) {
+    DB::table('VEICULOS')
+    ->where('cod_veiculo', $cod_veiculo)
+    ->update([
+        'status' => 'Disponível',
+        'obs_status' => ''
+    ]);
+    } else {
+        return response()->json(['success' => false, 'message' => 'Veículo não encontrado para a rota especificada.'], 404);
+    }
+
+
     return response()->json(['success' => true, 'message' => 'Informações da rota salvas com sucesso!'], 200);
 }
 
@@ -697,7 +868,38 @@ public function insertRouteSteps(Request $request)
 
     return response()->json(['success' => true, 'message' => 'Steps da rota salvos com sucesso!'], 200);
 }
-public function fechViagens(Request $request)
+public function fetchViagens(Request $request)
+{
+    $info = $request->all();
+    $codMotorista = $info['codMotorista'];
+    $idTipoUsuario = $info['idTipoUsuario'];
+
+    $viagens = DB::table('ROTAS as r')
+    ->join('VEICULOS as v', 'r.cod_veiculo', '=', 'v.cod_veiculo')
+    ->join('PARTIDAS as p', 'r.cod_rota', '=', 'p.cod_rota')
+    ->join('CHEGADAS as c', 'r.cod_rota', '=', 'c.cod_rota')
+    ->join('ROTA_INFO as ri', 'r.cod_rota', '=', 'ri.cod_rota')
+    ->select(
+        'r.cod_rota',
+        'r.status as status_rota',
+        'r.cod_motorista',
+        'v.modelo',
+        'v.placa',
+        'p.data_hora_partida',
+        'c.data_hora_chegada',
+        'ri.km_percorrido',
+        'ri.num_paradas',
+    )
+    ->when($idTipoUsuario == 2, function ($query) use ($codMotorista) {
+        return $query->where('r.cod_motorista', $codMotorista);
+    })
+    ->distinct()
+    ->get();
+
+
+    return response()->json(['success' => true, 'message' => 'Viagens carregadas com sucesso!', 'viagens' => $viagens], 200);
+}
+public function fetchMaisInfoViagens(Request $request)
 {
     $info = $request->all();
     $codMotorista = $info['codMotorista'];
@@ -743,6 +945,6 @@ public function editStatusRotaMobile(Request $request)
             ]);
 
 
-    return response()->json(['success' => true, 'message' => 'Viagens carregadas com sucesso!' ], 200);
+    return response()->json(['success' => true, 'message' => 'Status atualizado com sucesso!' ], 200);
 }
 }

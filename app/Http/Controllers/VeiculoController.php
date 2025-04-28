@@ -19,10 +19,11 @@ class VeiculoController extends Controller
                 'veic.placa',
                 'veic.ano',
                 'veic.capacidade',
-                // 'veic.dt_prox_manu',
-                // 'veic.dt_ultim_manu',
+                'veic.dt_prox_manu',
+                'veic.dt_ultim_manu',
                 'tv.descricao as tipo_veiculo',
                 'veic.status',
+                'veic.obs_status',
             );
 
         if (!empty($searchTerm)) {
@@ -33,19 +34,13 @@ class VeiculoController extends Controller
         }
 
         $veiculos = $veiculos->get();
-
+        // dd($veiculos);
         return response($veiculos, 200);
     }
-    public function linkMotorista(Request $request)
+    public function getVeiculosDisponiveis(Request $request)
     {
         $info = $request->all();
-        dd($info);
-
-        $searchTerm = $request->input('search');
-
         $veiculos = DB::table('VEICULOS as veic')
-            ->leftjoin('EMPRESAS as emp', 'veic.cod_empresa', '=', 'emp.cod_empresa')
-            // ->join('USUARIOS as u', 'veic.cod_motorista', '=', 'u.cod_usuario')
             ->join('TIPOS_VEICULO as tv', 'veic.id_tipo_veiculo', '=', 'tv.id')
             ->select(
                 'veic.cod_veiculo',
@@ -55,23 +50,14 @@ class VeiculoController extends Controller
                 'veic.capacidade',
                 // 'veic.dt_prox_manu',
                 // 'veic.dt_ultim_manu',
-                // 'u.nome as motorista',
-                // 'u.cod_usuario as cod_motorista',
                 'tv.descricao as tipo_veiculo',
                 'veic.status',
-                'emp.nome as empresa'
-            );
-
-        if (!empty($searchTerm)) {
-            $veiculos->where(function ($subQuery) use ($searchTerm) {
-                $subQuery->where('veic.modelo', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('veic.placa', 'LIKE', '%' . $searchTerm . '%')
-                    ->orWhere('u.nome', 'LIKE', '%' . $searchTerm . '%');
-            });
-        }
+                )
+                ->where('status', 'Disponível');
 
         $veiculos = $veiculos->get();
 
+        // dd($veiculos);
         return response($veiculos, 200);
     }
 
@@ -85,8 +71,8 @@ class VeiculoController extends Controller
             'placa' => $request->input('placa'),
             'ano' => $request->input('ano'),
             'capacidade' => $request->input('capacidade'),
-            // 'dt_prox_manu' => $request->input('dataProxManutencao'),
-            // 'dt_ultim_manu' => $request->input('dataUltManutencao'),
+            'dt_prox_manu' => $request->input('dataProxManutencao'),
+            'dt_ultim_manu' => $request->input('dataUltManutencao'),
             'status' => 'disponivel',
             'id_tipo_veiculo' => $request->input('tipoVeiculo'),
         ]);

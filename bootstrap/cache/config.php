@@ -4,7 +4,7 @@
     'name' => 'Laravel',
     'env' => 'local',
     'debug' => true,
-    'url' => 'http://192.168.1.68:8000',
+    'url' => 'http://192.168.98.158:8000',
     'asset_url' => NULL,
     'timezone' => 'UTC',
     'locale' => 'en',
@@ -356,7 +356,7 @@
       array (
         'driver' => 'local',
         'root' => 'C:\\wamp64\\www\\GitHub\\controle-frotas-api-v1\\storage\\app/public',
-        'url' => 'http://192.168.1.68:8000/storage',
+        'url' => 'http://192.168.98.158:8000/storage',
         'visibility' => 'public',
       ),
       's3' => 
@@ -707,7 +707,7 @@
       2 => '127.0.0.1',
       3 => '127.0.0.1:8000',
       4 => '::1',
-      5 => '192.168.1.68:8000',
+      5 => '192.168.98.158:8000',
     ),
     'guard' => 
     array (
